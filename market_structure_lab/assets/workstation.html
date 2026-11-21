@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuantDesk · Local Market Structure Workstation</title>
+<style>
+/* QuantDesk v0.3.1 — Midnight Navy / Graphite. No remote assets. */
+:root {
+  color-scheme: dark;
+  --bg: #060A11;
+  --shell: #0B1220;
+  --panel: #0E1827;
+  --panel-raised: #121F31;
+  --plot: #080F1B;
+  --line: #203047;
+  --line-soft: #172439;
+  --text: #E8EEF8;
+  --text-secondary: #A3B3C9;
+  --text-muted: #7F93AC;
+  --accent: #5BA8F5;
+  --accent-soft: rgba(91, 168, 245, .12);
+  --bull: #32CBB1;
+  --bear: #F07686;
+  --warn: #E9B96F;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --shadow-panel: 0 10px 28px rgba(0, 0, 0, .18);
+  font-family: Inter, system-ui, "Segoe UI", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button, select { cursor: pointer; }
+button, select, input[type="range"], textarea { transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, color 120ms ease; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+button:disabled { opacity: .43; cursor: not-allowed; }
+button:active:not(:disabled) { transform: translateY(1px); }
+::selection { background: rgba(91, 168, 245, .3); color: var(--text); }
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 13px max(22px, calc((100vw - 1640px) / 2 + 22px));
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--shell);
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #2C5875;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #18364D, #102439);
+  color: #78C6F8;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -.08em;
+}
+.brand h1 { margin: 0 0 2px; font-size: 19px; font-weight: 720; letter-spacing: -.55px; line-height: 1.3; }
+.brand .suffix { font-size: 13px; font-weight: 530; letter-spacing: -.1px; color: var(--text-muted); }
+.brand p { margin: 0; color: var(--text-muted); font-size: 11px; letter-spacing: .01em; }
+.tags { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 29px;
+  border: 1px solid #2B3D52;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(10, 20, 34, .6);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+.chip.safe { border-color: #23574F; color: #9BDECF; }
+.chip .dot { width: 6px; height: 6px; display: inline-block; border-radius: 50%; background: var(--bull); }
+
+/* Overall structure */
+main { max-width: 1640px; margin: 0 auto; padding: 20px 22px 26px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  padding: 14px 17px 13px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, .09);
+}
+.stat small { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 11px; font-weight: 550; letter-spacing: .01em; }
+.stat strong { display: block; font-size: clamp(22px, 1.7vw, 26px); line-height: 1.22; font-weight: 730; letter-spacing: -.7px; font-variant-numeric: tabular-nums; }
+.stat span { display: block; margin-top: 6px; color: var(--text-muted); font-size: 11px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-panel);
+}
+.paneHead { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 17px 18px 13px; }
+.paneHead h2 { margin: 0 0 4px; font-size: 15px; font-weight: 680; letter-spacing: -.24px; }
+.version { margin-left: 6px; color: var(--text-muted); font-size: 11px; font-weight: 520; }
+.sub { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.group { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+.symbols { display: inline-flex; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-md); background: #0A1422; }
+.symbols button {
+  min-height: 32px;
+  padding: 6px 14px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+}
+.symbols button.active { background: #203C5C; color: #F3F9FF; box-shadow: inset 0 0 0 1px #365C7F; }
+.symbols button:hover:not(.active) { background: var(--panel-raised); color: var(--text); }
+button, .btn {
+  min-height: 37px;
+  padding: 8px 12px;
+  border: 1px solid #334961;
+  border-radius: var(--radius-md);
+  background: #18283D;
+  color: #DDE9F8;
+  font-weight: 560;
+}
+button:hover:not(:disabled) { background: #233A54; border-color: #49617E; }
+button.primary { background: #185D56; border-color: #267B70; color: #E6FFF8; font-weight: 650; }
+button.primary:hover:not(:disabled) { background: #20766A; border-color: #36A28F; }
+
+/* Replay chart and controls */
+.chartWrap { padding: 0 16px; }
+.chartOuter {
+  position: relative;
+  overflow: hidden;
+  height: 535px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--plot);
+}
+canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+#hover {
+  position: absolute;
+  z-index: 4;
+  display: none;
+  pointer-events: none;
+  max-width: 235px;
+  padding: 10px 12px;
+  border: 1px solid #35516C;
+  border-radius: 9px;
+  background: rgba(13, 25, 41, .98);
+  color: var(--text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.65;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, .45);
+}
+.chartLegend { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 10px 18px 0; color: var(--text-muted); font-size: 11px; }
+.legendKey { display: inline-block; width: 14px; height: 7px; margin-right: 6px; vertical-align: 1px; border-radius: 2px; background: var(--accent); opacity: .85; }
+.legendKey.support { background: var(--bull); }
+.legendKey.reaction { width: 7px; height: 7px; background: var(--warn); border-radius: 50%; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 13px 17px 17px; }
+.controls .iconBtn { width: 39px; min-width: 39px; padding: 8px 6px; text-align: center; }
+.controls input[type=range] { flex: 1 1 170px; min-width: 140px; accent-color: var(--accent); cursor: pointer; }
+.controls label { color: var(--text-muted); font-size: 11px; }
+select { min-height: 36px; border: 1px solid #334961; border-radius: 9px; background: #17263A; color: var(--text); padding: 7px 10px; }
+#currentDate { min-width: 89px; text-align: center; color: #DDEAF9; font-size: 12px; font-weight: 640; font-variant-numeric: tabular-nums; }
+.explanation { padding: 12px 17px; border-top: 1px solid var(--line-soft); background: #101D2D; color: var(--text-secondary); font-size: 11px; line-height: 1.65; }
+
+/* Right research rail */
+.sideCol { display: grid; gap: 15px; }
+.sideHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 15px 16px 8px; }
+.sideHead h3 { margin: 0; font-size: 13px; font-weight: 690; letter-spacing: -.08px; }
+.sideHead small { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+.zones { max-height: 368px; overflow: auto; padding: 0 16px 10px; scrollbar-color: #334963 transparent; scrollbar-width: thin; }
+.zone { padding: 11px 1px 12px; border-top: 1px solid var(--line-soft); }
+.zone .line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.zone .zoneTitle { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; color: var(--text); font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.zone .radius { color: var(--text-secondary); font-weight: 470; }
+.zone .zoneSide { display: inline-block; margin-top: 4px; color: var(--text-secondary); font-size: 10px; }
+.zone .secondary { color: var(--text-muted); margin-top: 3px; font-size: 10.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.swatch { display: inline-block; flex: 0 0 8px; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: var(--bull); }
+.swatch.above { background: var(--accent); }
+.activity { max-height: 165px; overflow: auto; padding: 0 16px 14px; scrollbar-color: #334963 transparent; scrollbar-width: thin; }
+.event { border-top: 1px solid var(--line-soft); padding: 10px 0; color: var(--text); font-size: 12px; text-transform: capitalize; }
+.event small { display: block; margin-top: 3px; color: var(--text-muted); font-size: 10.5px; text-transform: none; }
+.noevents { padding: 12px 0; color: var(--text-muted); font-size: 12px; line-height: 1.55; }
+.journal { padding: 0 16px 16px; }
+.journal textarea {
+  width: 100%; min-height: 92px; max-height: 270px; resize: vertical;
+  border: 1px solid #31475D;
+  border-radius: var(--radius-md);
+  background: #091322;
+  padding: 12px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.journal textarea::placeholder { color: #8498AF; }
+.journal textarea:focus { border-color: var(--accent); }
+.journal .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
+.status { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; }
+.notes { max-height: 250px; overflow: auto; margin-top: 11px; scrollbar-width: thin; scrollbar-color: #334963 transparent; }
+.note { padding: 11px 0; border-top: 1px solid var(--line-soft); color: var(--text-secondary); font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.noteTop { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; color: var(--text-muted); font-size: 10px; }
+.note button { min-height: 22px; padding: 2px 5px; border: 0; background: transparent; color: #F1A8B1; font-size: 10px; }
+.note button:hover { background: rgba(240,118,134,.09); }
+.foot { margin-top: 15px; padding: 16px 4px 8px; border-top: 1px solid var(--line-soft); color: var(--text-muted); font-size: 11px; line-height: 1.7; }
+.error { display: none; margin-bottom: 15px; padding: 12px; border: 1px solid #9B4D60; border-radius: var(--radius-md); background: #3B1B2A; color: #FFE0E5; }
+.mono { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1099px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sideCol { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chartOuter { height: 515px; }
+}
+@media (max-width: 699px) {
+  main { padding: 13px 10px 20px; }
+  header { padding: 12px; align-items: flex-start; }
+  .brand h1 { font-size: 17px; }
+  .brand .suffix { font-size: 11px; }
+  .brand p { font-size: 10px; }
+  .mark { width: 36px; height: 36px; flex-basis: 36px; font-size: 21px; }
+  .tags { gap: 6px; }
+  .chip { font-size: 9px; padding: 4px 8px; min-height: 26px; }
+  .stats { gap: 8px; margin-bottom: 11px; }
+  .stat { padding: 11px 12px; }
+  .stat small { font-size: 10px; line-height: 1.25; }
+  .stat strong { font-size: 21px; }
+  .stat span { font-size: 10px; }
+  .sideCol { grid-template-columns: minmax(0,1fr); gap: 11px; }
+  .paneHead { padding: 14px 12px 11px; }
+  .chartWrap { padding: 0 7px; }
+  .chartOuter { height: 370px; }
+  .chartLegend { margin: 10px 9px 0; gap: 10px; font-size: 10px; }
+  .controls { gap: 7px; padding: 12px 9px 13px; }
+  .controls input[type=range] { order: 2; flex-basis: 100%; }
+  .controls #currentDate { margin-left: auto; }
+  .explanation { padding: 11px 12px; }
+}
+@media (max-width: 375px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .group { gap: 6px; }
+  .brand p { display: none; }
+  .controls #currentDate { min-width: 84px; font-size: 11px; }
+  #latest { font-size: 11px; padding: 7px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+</style></head>
+<body>
+<header><div class="brand"><div class="mark" aria-hidden="true">Q</div><div><h1>QuantDesk <span class="suffix">/ Market Structure Workstation</span></h1><p>Local Python research engine · browser dashboard · SQLite journal</p></div></div><div class="tags"><span class="chip safe"><span class="dot" aria-hidden="true"></span>127.0.0.1 LOCAL</span><span class="chip">HISTORICAL DATA</span><span class="chip">NO BROKER / NO ORDERS</span></div></header>
+<main>
+<div id="error" class="error" role="alert"></div>
+<section class="stats"><div class="stat"><small>Selected session closing price</small><strong id="lastPrice">—</strong><span id="lastSymbol">—</span></div><div class="stat"><small>Known zones before session open</small><strong id="zoneCount">—</strong><span>Prior-session-only KDE estimates</span></div><div class="stat"><small>Completed-session reactions</small><strong id="reactCount">—</strong><span>Descriptive labels, not trade fills</span></div><div class="stat"><small>Data coverage</small><strong id="coverage">—</strong><span id="dataTag">Historical daily OHLCV</span></div></section>
+<div class="layout"><section class="panel"><div class="paneHead"><div><h2>Price-reaction replay <span class="version">v0.3.1</span></h2><div id="asof" class="sub">Loading historical SPY/QQQ series…</div></div><div class="group"><div class="symbols"><button id="symSPY" data-symbol="SPY" class="active" aria-pressed="true">SPY</button><button id="symQQQ" data-symbol="QQQ" aria-pressed="false">QQQ</button></div><label class="sub" for="window">Window</label><select id="window"><option value="40">40 bars</option><option value="80" selected>80 bars</option><option value="160">160 bars</option></select></div></div>
+<div class="chartWrap"><div class="chartOuter"><canvas id="chart" aria-label="Historical candlestick chart with point-in-time price zones and volume"></canvas><div id="hover" role="tooltip"></div></div></div>
+<div class="chartLegend" aria-label="Chart legend"><span><span class="legendKey"></span>Above-price zone</span><span><span class="legendKey support"></span>Below-price zone</span><span><span class="legendKey reaction"></span>Failed breakout marker</span></div>
+<div class="controls"><button id="prev" class="iconBtn" title="Previous session" aria-label="Previous session">◀</button><button id="play">▶ Play</button><button id="next" class="iconBtn" title="Next session" aria-label="Next session">▶</button><input type="range" id="sessionSlider" min="0" max="0" value="0" step="1" aria-label="Replay historical sessions"><span id="currentDate">—</span><button id="latest" title="Jump to last available historical date">Last date</button></div>
+<div class="explanation">The chart requests one historical session at a time from your local Python server. Zones visible on day <em>t</em> were calculated from bars through day <em>t−1</em>. The selected day's candle and reaction labels become available only after that session closes. Daily candles do not reveal order-book liquidity, true volume-at-price, or executable 0DTE fills.</div></section>
+<div class="sideCol"><div class="panel"><div class="sideHead"><h3>Known price zones</h3><small id="zonesLabel">—</small></div><div class="zones" id="zones"></div><div class="sideHead" style="padding-top:9px"><h3>That session's reactions</h3><small id="reactionsLabel"></small></div><div class="activity" id="activity"></div></div>
+<div class="panel"><div class="sideHead"><h3>Research journal</h3><small>Local SQLite</small></div><div class="journal"><div class="sub" id="journalDate" style="margin-bottom:10px">Notes linked to current symbol and date</div><textarea id="noteInput" maxlength="2000" placeholder="Record your hypothesis before advancing replay. What would you expect price to do next, and why?"></textarea><div class="row"><span class="status" id="noteStatus" role="status" aria-live="polite">Saved only on this PC</span><button class="primary" id="saveNote">Save note</button></div><div class="notes" id="notes"></div></div></div></div></div>
+<div class="foot">RESEARCH ONLY • v0.3.1 serves locally at 127.0.0.1, with no CDN, account, cloud connection, or broker integration. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
+</main>
+<script>
+'use strict';
+const $=(id)=>document.getElementById(id);
+const app={symbol:'SPY',dates:[],idx:0,frame:null,info:null,window:80,timer:null,request:0,hoverIndex:null};
+// Canvas uses the same palette tokens as CSS. No remote theme dependency.
+const themeStyle=getComputedStyle(document.documentElement);
+const cssColor=(name)=>themeStyle.getPropertyValue(name).trim();
+const palette={plot:cssColor('--plot'),grid:cssColor('--line-soft'),bear:cssColor('--bear'),bull:cssColor('--bull'),accent:cssColor('--accent'),warn:cssColor('--warn'),textMuted:cssColor('--text-muted'),accentFill:'rgba(91,168,245,.11)',bullFill:'rgba(50,203,177,.10)',hover:'rgba(163,179,201,.4)'};
+const money=(n)=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=(n)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const err=(message)=>{const x=$('error');x.textContent=message;x.style.display='block';};
+const clearError=()=>{$('error').style.display='none';};
+async function api(path,opts={}) {const response=await fetch(path,{cache:'no-store',...opts});const data=await response.json();if(!response.ok)throw Error(data.error||`HTTP ${response.status}`);return data;}
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+async function selectSymbol(sym){stop();app.symbol=sym;app.request++;for(const s of ['SPY','QQQ']){$('sym'+s).classList.toggle('active',sym===s);$('sym'+s).setAttribute('aria-pressed',String(sym===s));}try{const d=await api('/api/dates?symbol='+encodeURIComponent(sym));if(sym!==app.symbol)return;app.dates=d.dates;app.idx=d.dates.length-1;$('sessionSlider').max=String(app.idx);await show();}catch(e){err(e.message);}}
+async function show(){const token=++app.request;const date=app.dates[app.idx];if(!date)return;clearError();try{const frame=await api(`/api/frame?symbol=${encodeURIComponent(app.symbol)}&date=${date}&window=${app.window}`);if(token!==app.request)return;app.frame=frame;$('sessionSlider').value=String(app.idx);$('currentDate').textContent=frame.date;$('lastPrice').textContent=money(frame.candles.at(-1).close);$('lastSymbol').textContent=app.symbol+' daily close';$('zoneCount').textContent=String(frame.levels.length);$('reactCount').textContent=String(frame.today_reactions.length);$('coverage').textContent=frame.data_ends.slice(0,7);$('asof').textContent=`${app.symbol} · ${frame.date} session completed · zones known from ${frame.map_asof_date}`;$('journalDate').textContent=`${app.symbol} · ${frame.date}  —  Notes recorded for this session`;renderZones(frame);renderEvents(frame);draw();refreshNotes(token); }catch(e){if(token===app.request)err(e.message);}}
+function renderZones(frame){const area=$('zones');area.replaceChildren();$('zonesLabel').textContent=frame.levels.length+' zones';const last=frame.candles.at(-1).close;for(const z of [...frame.levels].sort((a,b)=>b.price-a.price)){const outer=el('div','zone');const top=el('div','line');const heading=el('span');const dot=el('span','swatch'+(z.price>last?' above':''));heading.className='zoneTitle';heading.append(dot,document.createTextNode(money(z.price)),el('span','radius',` ± ${money(z.radius).slice(1)}`));top.append(heading,el('span','sub',z.pivot_count+' pivots'));outer.append(top,el('div','zoneSide',z.price>last?'Above selected close':'At or below selected close'),el('div','secondary',`First tracked ${z.first_seen} · zone ID ${z.id}`),el('div','secondary',`Map as of ${z.asof_date}`));area.append(outer);}if(!frame.levels.length)area.append(el('div','noevents','No qualifying historical zones on this date.'));}
+function renderEvents(frame){const area=$('activity');area.replaceChildren();$('reactionsLabel').textContent=frame.today_reactions.length+' records';if(!frame.today_reactions.length){area.append(el('div','noevents','No detected level interactions this session.'));return;}for(const mark of frame.today_reactions){const item=el('div','event',mark.type.replaceAll('_',' '));item.append(el('small',`${mark.zone_id} · ${money(mark.level_price)} · ${mark.side}`));area.append(item);}}
+async function refreshNotes(token){try{const result=await api(`/api/notes?symbol=${app.symbol}&date=${app.dates[app.idx]}`);if(token!==app.request)return;const area=$('notes');area.replaceChildren();if(!result.notes.length){area.append(el('div','noevents','No notes for this session yet.'));return;}for(const n of result.notes){const wrap=el('div','note');const top=el('div','noteTop');const created=el('span','',n.created_at.slice(0,16).replace('T',' ')+' UTC');const del=el('button','','Delete');del.title='Delete note';del.addEventListener('click',async()=>{if(!confirm('Delete this research note?'))return;try{await api('/api/notes/'+n.id,{method:'DELETE',headers:{'Content-Type':'application/json','X-QuantDesk-Local':'1'}});await refreshNotes(app.request);}catch(e){err(e.message);}});top.append(created,del);wrap.append(top,el('div','',n.content));area.append(wrap);}}catch(e){err('Journal: '+e.message);}}
+async function saveNote(){const text=$('noteInput').value.trim();if(!text)return;$('saveNote').disabled=true;const sym=app.symbol,date=app.dates[app.idx];try{await api('/api/notes',{method:'POST',headers:{'Content-Type':'application/json','X-QuantDesk-Local':'1'},body:JSON.stringify({symbol:sym,date,content:text})});$('noteInput').value='';$('noteStatus').textContent='Saved to local SQLite';if(sym===app.symbol&&date===app.dates[app.idx])await refreshNotes(app.request);}catch(e){err(e.message);}finally{$('saveNote').disabled=false;}}
+function stop(){if(app.timer!==null){clearInterval(app.timer);app.timer=null;}$('play').textContent='▶ Play';}
+function go(n){const k=Math.max(0,Math.min(app.dates.length-1,n));if(k===app.idx)return;app.idx=k;show();}
+function play(){if(app.timer!==null){stop();return;}if(app.idx>=app.dates.length-1)app.idx=0;show();$('play').textContent='⏸ Pause';app.timer=setInterval(()=>{if(app.idx>=app.dates.length-1){stop();return;}go(app.idx+1);},500);}
+function draw(){const frame=app.frame;if(!frame)return;const cvs=$('chart');const box=cvs.getBoundingClientRect(),dpi=Math.max(1,Math.min(window.devicePixelRatio||1,2));if(box.width<=0||box.height<=0)return;cvs.width=Math.round(box.width*dpi);cvs.height=Math.round(box.height*dpi);const c=cvs.getContext('2d');c.setTransform(dpi,0,0,dpi,0,0);const W=box.width,H=box.height;const bars=frame.candles;const xLeft=57,xRight=W-63,top=24,bot=H-90,volumeTop=H-73,volumeBot=H-25;const width=xRight-xLeft,height=bot-top;const lows=bars.map(b=>b.low),highs=bars.map(b=>b.high);const lo=Math.min(...lows),hi=Math.max(...highs),padding=Math.max((hi-lo)*.10,.5);const min=lo-padding,max=hi+padding;const y=(p)=>bot-(p-min)/(max-min)*height;const cw=width/bars.length;const cx=(i)=>xLeft+(i+.5)*cw;const down=palette.bear,up=palette.bull,txt=palette.textMuted;c.clearRect(0,0,W,H);c.fillStyle=palette.plot;c.fillRect(0,0,W,H);
+// Horizontal grid and right-aligned prices.
+c.font='11px Segoe UI,Arial';c.textAlign='left';for(let k=0;k<6;k++){const p=min+(max-min)*k/5,yy=y(p);c.strokeStyle=palette.grid;c.lineWidth=1;c.beginPath();c.moveTo(xLeft,yy);c.lineTo(xRight,yy);c.stroke();c.fillStyle=txt;c.fillText(p.toFixed(2),xRight+8,yy+4);}
+// Zone overlays: the chart auto-scales to observed candles; distant zones remain in the sidebar.
+for(const z of frame.levels){if(z.price+z.radius<min||z.price-z.radius>max)continue;const color=z.price>bars.at(-1).close?palette.accent:palette.bull;const topY=y(z.price+z.radius),botY=y(z.price-z.radius);c.fillStyle=z.price>bars.at(-1).close?palette.accentFill:palette.bullFill;c.fillRect(xLeft,topY,width,Math.max(2,botY-topY));c.strokeStyle=color;c.setLineDash([5,5]);c.lineWidth=1;c.beginPath();c.moveTo(xLeft,y(z.price));c.lineTo(xRight,y(z.price));c.stroke();c.setLineDash([]);c.fillStyle=color;c.textAlign='right';c.font='10px Segoe UI,Arial';c.fillText(z.price.toFixed(2),xRight-4,y(z.price)-4);}
+const vmax=Math.max(...bars.map(b=>b.volume),1);const bw=Math.max(1,Math.min(cw*.66,13));
+for(let i=0;i<bars.length;i++){const b=bars[i],x=cx(i),isup=b.close>=b.open,color=isup?up:down;c.strokeStyle=color;c.fillStyle=color;c.lineWidth=Math.max(.8,Math.min(1.2,cw/4));c.beginPath();c.moveTo(x,y(b.high));c.lineTo(x,y(b.low));c.stroke();const topBody=y(Math.max(b.open,b.close)),bottomBody=y(Math.min(b.open,b.close));c.fillRect(x-bw/2,topBody,bw,Math.max(1,bottomBody-topBody));const vh=b.volume/vmax*(volumeBot-volumeTop);c.globalAlpha=.32;c.fillRect(x-bw/2,volumeBot-vh,bw,vh);c.globalAlpha=1;}
+// A single marker per candle type, using only observed dates up to replay t.
+const index=new Map(bars.map((b,i)=>[b.date,i]));for(const m of frame.markers){const i=index.get(m.date);if(i===undefined)continue;const b=bars[i],upward=m.type.includes('up')||m.type.includes('rejection_up');c.beginPath();c.arc(cx(i),y(upward?b.low:b.high)+(upward?8:-8),3.1,0,Math.PI*2);c.fillStyle=m.type.includes('failed')?palette.warn:upward?palette.bull:palette.bear;c.strokeStyle=palette.plot;c.lineWidth=.85;c.stroke();c.fill();}
+const step=Math.max(1,Math.ceil(bars.length/9));c.fillStyle=txt;c.font='10px Segoe UI,Arial';c.textAlign='center';for(let i=0;i<bars.length;i+=step){c.fillText(bars[i].date.slice(5),cx(i),H-10);}
+c.fillStyle=palette.textMuted;c.textAlign='left';c.font='10px Segoe UI,Arial';c.fillText('VOLUME',xLeft,volumeTop-7);
+if(app.hoverIndex!==null&&app.hoverIndex>=0&&app.hoverIndex<bars.length){const i=app.hoverIndex,b=bars[i],x=cx(i);c.strokeStyle=palette.hover;c.lineWidth=1;c.setLineDash([3,4]);c.beginPath();c.moveTo(x,top);c.lineTo(x,volumeBot);c.stroke();c.setLineDash([]);}
+app.chartBox={xLeft,xRight,top,volumeBot,cw,count:bars.length,bars};}
+function hover(ev){if(!app.chartBox)return;const cvs=$('chart'),r=cvs.getBoundingClientRect(),q=app.chartBox;const x=ev.clientX-r.left,y=ev.clientY-r.top;if(x<q.xLeft||x>q.xRight||y<q.top||y>q.volumeBot){app.hoverIndex=null;$('hover').style.display='none';draw();return;}app.hoverIndex=Math.max(0,Math.min(q.count-1,Math.floor((x-q.xLeft)/q.cw)));const b=q.bars[app.hoverIndex],tip=$('hover');tip.textContent=`${b.date}\nO ${money(b.open)} · H ${money(b.high)}\nL ${money(b.low)} · C ${money(b.close)}\nVolume ${fmt(b.volume)}`;tip.style.whiteSpace='pre-line';tip.style.left=Math.max(8,Math.min(x+12,r.width-230))+'px';tip.style.top=Math.max(8,Math.min(y+12,r.height-90))+'px';tip.style.display='block';draw();}
+async function start(){try{const status=await api('/api/status');if(status.orders_enabled||status.broker_connected)throw Error('Unexpected trading-enabled server');app.info=status;await selectSymbol('SPY');}catch(e){err('Failed to connect to local QuantDesk research server: '+e.message);}}
+$('symSPY').onclick=()=>selectSymbol('SPY');$('symQQQ').onclick=()=>selectSymbol('QQQ');$('window').onchange=(e)=>{app.window=Number(e.target.value);show();};$('prev').onclick=()=>{stop();go(app.idx-1);};$('next').onclick=()=>{stop();go(app.idx+1);};$('latest').onclick=()=>{stop();go(app.dates.length-1);};$('play').onclick=play;$('sessionSlider').oninput=(e)=>{stop();go(Number(e.target.value));};$('saveNote').onclick=saveNote;window.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;if(e.key==='ArrowLeft'){stop();go(app.idx-1);}if(e.key==='ArrowRight'){stop();go(app.idx+1);}});$('chart').addEventListener('mousemove',hover);$('chart').addEventListener('mouseleave',()=>{app.hoverIndex=null;$('hover').style.display='none';draw();});window.addEventListener('resize',()=>draw());start();
+</script></body></html>

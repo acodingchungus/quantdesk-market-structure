@@ -1,0 +1,87 @@
+# QuantDesk Market Structure Workstation v0.3
+
+A **localhost-only** browser dashboard powered by a Python historical research engine and a local SQLite notes database. This is a working upgrade to the v0.2 replay, not a broker or live-trading app.
+
+## What changed in v0.3
+
+- `python -m market_structure_lab.workstation` starts a local Python HTTP server on **127.0.0.1:8765**.
+- A fully self-contained, locally served HTML/CSS/JavaScript dashboard opens automatically in your default browser. **No CDN and no cloud connection.**
+- The UI requests one session at a time from JSON API endpoints and shows **only completed daily candles through the chosen replay date**. The drawn price zones use prior-session-only maps, continuing the causal model from v0.2.
+- SPY/QQQ tabs, 40/80/160-candle window, previous/next session, play/pause, date slider, candle crosshair, volume, price zones and reaction markers.
+- A **research journal** stores date-stamped, symbol-specific analyst notes in `outputs/v03_workstation/research_notes.sqlite` using SQLite, which ships with Python. Notes can be created and deleted; this is the only application data the backend writes. They are timestamped when saved, not retroactively proven precommitted predictions.
+- No API keys, broker connectivity, order routes, or Internet access.
+- v0.1 and v0.2 code, tests and standalone/offline HTML replay files are preserved.
+
+## First run on Windows 11
+
+Extract the complete project to a *new* directory next to v0.2, for example:
+
+`C:\ai projects\QUANT DESK\QuantDesk_Market_Structure_v0_3`
+
+Open PowerShell **inside that directory**:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m unittest discover -s tests_market_structure -v
+.\.venv\Scripts\python.exe -m market_structure_lab.workstation --data-dir data
+```
+
+The Python process will print a local link and normally open it in your browser:
+
+**http://127.0.0.1:8765/**
+
+After the first setup, you can **double-click `start_workstation.bat`** from the project directory. Keep the PowerShell/terminal window open while using the dashboard. **Press Ctrl+C in PowerShell to stop the local server.** Closing the browser tab does not automatically stop the Python process.
+
+If the browser doesn't open automatically, manually enter the link. If port 8765 is occupied, run with `--port 8766` and browse `http://127.0.0.1:8766/`.
+
+**Alternative: patch existing v0.2:** unzip `QuantDesk_v0_3_UPGRADE_PATCH.zip` directly into its project root and merge folders. That retains your existing `.venv`, `data`, and prior outputs. Then run `python -m market_structure_lab.workstation` from that folder.
+
+## What is happening on your machine?
+
+```text
+Local SPY.csv / QQQ.csv (historical daily OHLCV)
+       ↓
+Python: unchanged v0.1 KDE price-zone detector
+       ↓
+v0.2: causal session-by-session zone maps and event labels
+       ↓
+Python stdlib HTTP server on 127.0.0.1:8765
+       │  GET /api/status
+       │  GET /api/dates?symbol=SPY
+       │  GET /api/frame?symbol=SPY&date=2026-08-03&window=80
+       │  GET /api/notes?symbol=SPY&date=2026-08-03
+       │  POST /api/notes   (local journal only)
+       │  DELETE /api/notes/{id}   (local journal only)
+       ↓
+Browser executes local HTML/CSS/JavaScript
+       │
+       └── SQLite: outputs/v03_workstation/research_notes.sqlite
+```
+
+Because the dashboard **requests data on demand**, later features can call additional local Python models. Unlike the standalone v0.2 HTML, this v0.3 page needs the Python server running. Your old `SPY_replay.html` and `QQQ_replay.html` remain standalone, no-server viewers.
+
+## Research & security limitations
+
+- **No live market feed:** CSVs included in this release end **2026-10-01**. To analyze later periods, replace the appropriately sourced and validated CSVs and **restart** the server. Source changes may alter historical adjusted levels.
+- The server listens only on **127.0.0.1**, rejects unexpected Host headers and cross-origin journal writes, and provides no broker/order endpoints. It is a personal local research app, **not a hardened multiuser service**. Do not port-forward it or expose it to LAN/the Internet.
+- The selected day's final candle is visible only as a **completed-session** result. All zone maps predate the chosen day. The replay does not provide tick-by-tick intraday chronology or an actual fill simulation.
+- Historical **adjusted** ETF series can differ from as-traded prices. Volume bars are daily aggregate volume, **not Volume Profile**, Level II, depth of market or resting liquidity.
+- New SQLite notes do not certify that predictions were made before their outcomes were known. A future version would require irreversible preregistration / paper-forward logging for that claim.
+- The December 2025 holdout was already inspected in v0.1 and v0.2. There is **no new independent holdout and no demonstrated trading alpha** in v0.3.
+- This version does not calculate options prices, 0DTE entries, live risk, account balances, or orders.
+
+## Roadmap — don't skip ahead
+
+1. **v0.3: Local workstation shell and journal** — this package.
+2. **Next: intraday research layer** — separate well-timestamped 5-minute/1-minute candles, session-aware levels, volume-at-price only from appropriately granular trade data.
+3. **Following: execution research** — historical OPRA options bid/ask, strike/DTE, survivorship and point-in-time IV, entry/exit scenarios and cost sensitivity.
+4. **Later: local statistical/AI research assistant** — read-only explanations, experiment generation and audit of model performance; never unrestricted order submission.
+
+## Testing
+
+```
+.\.venv\Scripts\python.exe -m unittest discover -s tests_market_structure -v
+```
+
+The v0.3 tests cover local API behavior, no-future session data, notes persistence, invalid requests, absence of order routes, and the preserved v0.1/v0.2 tests.

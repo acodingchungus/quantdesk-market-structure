@@ -1,0 +1,49 @@
+# QuantDesk Market Structure Workstation v0.3.1 — Midnight Navy / Graphite
+
+**Visual upgrade of v0.3. Research behavior and endpoints are unchanged.**
+
+## What changed
+
+- Near-black navy shell, subdued cards, restrained accent and updated typography.
+- A synchronized blue/teal/red/amber chart palette for CSS, candlesticks, zones, volumes, hover and markers.
+- Cleaner 4-card summary, 2-column desktop terminal, compact price zones, readable notes panel.
+- Text position labels for above-price and at/below-price zones, plus chart legend. Zone position is relative to the selected session's completed close; it is not a recommendation.
+- Smaller, clearer playback controls; responsive layout tested on 1440, 1024, 768, 390 and 320 pixel widths.
+- Preserves original read-only market data, date-causal level maps, completed-session reactions, and local SQLite journal.
+
+## Windows: fresh installation
+
+Extract `QuantDesk_Market_Structure_v0_3_1_COMPLETE.zip` next to your existing v0.3 directory; don't overwrite the old project.
+
+In PowerShell from inside `QuantDesk_Market_Structure_v0_3_1`:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m unittest discover -s tests_market_structure -v
+.\.venv\Scripts\python.exe -m market_structure_lab.workstation --data-dir data
+```
+
+Visit `http://127.0.0.1:8765/`. Keep PowerShell running; Ctrl+C stops the local research server. Double-click `start_workstation.bat` after setup to launch it more easily.
+
+**If an older QuantDesk workstation is already running, stop it first**, otherwise v0.3.1 can't bind to the same port. If necessary run with `--port 8766`, then visit `http://127.0.0.1:8766/`.
+
+## Windows: patch your current v0.3 and keep notes
+
+1. Exit the running workstation with Ctrl+C and close its old browser tab.
+2. Make a backup of `market_structure_lab/assets/workstation.html` if you want to compare before/after.
+3. Extract the **upgrade patch** into the root of your v0.3 project and merge/replace matching files. The patch does **not** include data, database or research code.
+4. Start using `start_workstation.bat` or `\.venv\Scripts\python.exe -m market_structure_lab.workstation --data-dir data`.
+5. Refresh the local webpage with Ctrl+F5 if the old style appears (the Python server already sets `Cache-Control: no-store`).
+
+Your research journal is retained because the database remains at `outputs/v03_workstation/research_notes.sqlite`, and the upgrade patch does not replace it. A separate *complete* install uses its own new notes database; to carry existing notes into it, copy `research_notes.sqlite` from the old project's `outputs/v03_workstation/` to the same location in v0.3.1 while both servers are stopped.
+
+## Design and safety
+
+- Theme specification: `UI_DESIGN_SPEC.md`.
+- Primary changed source: `market_structure_lab/assets/workstation.html`. Canvas colors are pulled from the same CSS palette to prevent mismatched chart and panel themes.
+- This is a **local, historical, research-only** tool. There is no live feed, broker integration, or executable order API.
+- The included SPY/QQQ daily OHLCV files end October 1, 2026, and can include back-adjusted prices. Intraday options fills, order-book depth, and real volume-at-price cannot be recovered from these daily bars.
+- Historical zone labels and plotted reactions are **not proof of positive expectancy or profitability**.
+
+The v0.1/v0.2 output HTML replays and historical research exports remain in the full package. The `unittest` suite and the v0.3 Python backend are retained.
