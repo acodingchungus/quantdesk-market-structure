@@ -128,7 +128,7 @@ class ProfileApiTests(unittest.TestCase):
 
     def test_status_and_missing_source_do_not_invent_a_profile(self):
         status=self.get('/api/status')
-        self.assertEqual(status['version'],'0.5')
+        self.assertEqual(status['version'],'0.6')
         self.assertFalse(status['broker_connected'])
         self.assertEqual(status['data'][0]['volume_profile']['trade_prints'],4)
         self.assertIsNone(status['data'][1]['volume_profile'])
