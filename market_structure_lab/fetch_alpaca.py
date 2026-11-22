@@ -16,9 +16,11 @@ def main():
     ap.add_argument('--feed',choices=['iex','sip'],default='iex')
     ap.add_argument('--output-dir',default='data')
     args=ap.parse_args()
-    k=os.getenv('APCA_API_KEY_ID'); s=os.getenv('APCA_API_SECRET_KEY')
-    if not k or not s:
-        raise SystemExit('Set APCA_API_KEY_ID and APCA_API_SECRET_KEY locally (do not share keys).')
+    from .credentials import get_alpaca_credentials, CredentialError
+    try:
+        k, s = get_alpaca_credentials()
+    except CredentialError as exc:
+        raise SystemExit(str(exc)) from None
     try:
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest

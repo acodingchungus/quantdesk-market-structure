@@ -437,7 +437,8 @@ def main(argv=None):
             if args.dry_run:
                 print(f'DRY RUN: {len(days)} weekdays x {len(args.symbols)} symbol(s) x {2 if args.kind=="both" else 1} dataset(s). No API calls. Holidays require independent calendar check.')
                 return 0
-            key=os.getenv('APCA_API_KEY_ID');secret=os.getenv('APCA_API_SECRET_KEY')
+            from .credentials import get_alpaca_credentials
+            key, secret = get_alpaca_credentials()
             client=AlpacaArchiveClient(key,secret,min_interval=args.min_request_interval)
             kinds=('bars','trades') if args.kind=='both' else (args.kind,)
             for day in days:

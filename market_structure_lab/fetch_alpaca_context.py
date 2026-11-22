@@ -87,8 +87,11 @@ def main():
     p.add_argument('--data-dir',default='data')
     p.add_argument('--overwrite',action='store_true')
     a=p.parse_args()
-    key,secret=os.getenv('APCA_API_KEY_ID'),os.getenv('APCA_API_SECRET_KEY')
-    if not key or not secret:p.error('Set APCA_API_KEY_ID and APCA_API_SECRET_KEY locally; never commit secrets')
+    from .credentials import get_alpaca_credentials, CredentialError
+    try:
+        key, secret = get_alpaca_credentials()
+    except CredentialError as exc:
+        p.error(str(exc))
     path=Path(a.data_dir)/'context'/f'{a.symbol}.csv'
     if path.exists() and not a.overwrite:p.error(f'{path} exists; --overwrite required')
     try:

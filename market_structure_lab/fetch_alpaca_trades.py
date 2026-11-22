@@ -93,9 +93,11 @@ def main():
     p.add_argument('--data-dir',default='data')
     p.add_argument('--overwrite',action='store_true')
     args=p.parse_args()
-    key=os.getenv('APCA_API_KEY_ID');secret=os.getenv('APCA_API_SECRET_KEY')
-    if not key or not secret:
-        p.error('Set APCA_API_KEY_ID and APCA_API_SECRET_KEY in local environment; never commit credentials.')
+    from .credentials import get_alpaca_credentials, CredentialError
+    try:
+        key, secret = get_alpaca_credentials()
+    except CredentialError as exc:
+        p.error(str(exc))
     try:
         start=date.fromisoformat(args.start);end=date.fromisoformat(args.end)
     except ValueError:

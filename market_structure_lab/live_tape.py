@@ -113,9 +113,11 @@ class LiveTape:
             }
 
     def start(self):
-        key, secret = os.getenv('APCA_API_KEY_ID'), os.getenv('APCA_API_SECRET_KEY')
-        if not key or not secret:
-            raise ValueError('Live stream requested but APCA_API_KEY_ID / APCA_API_SECRET_KEY not set')
+        from .credentials import get_alpaca_credentials, CredentialError
+        try:
+            key, secret = get_alpaca_credentials()
+        except CredentialError as exc:
+            raise ValueError(str(exc)) from None
         if self.thread is not None:
             return
         self.connection = 'connecting'
