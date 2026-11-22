@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import closing
+from collections import OrderedDict
 import hashlib
 import json
 import math
@@ -24,6 +25,7 @@ from .core import Config, evaluate_symbol, load_bars
 from .replay_model import make_replay
 from .intraday import INTERVALS, load_minutes, aggregate_minutes, coverage, marks_through_bars
 from .volume_profile import load_trades, build_profile, provenance
+from .sip_archive import dest_path, read_meta_verified
 from .market_intelligence import MarketIntelligence
 from .live_tape import LiveTape
 import pandas as pd
@@ -60,6 +62,9 @@ class ResearchStore:
         self.symbols = tuple(symbols)
         self.datasets = {}
         self.lock = RLock()
+        # Avoid keeping months of SIP ticks in RAM. Cache only the last loaded
+        # compressed trade session; the archive itself is private and persistent.
+        self._archive_tick_cache = OrderedDict()
         self.db_file.parent.mkdir(parents=True, exist_ok=True)
         self._initialize_db()
         self.reload()
@@ -137,7 +142,37 @@ class ResearchStore:
         intelligence = MarketIntelligence(self.data_dir, {s: ds['bars'] for s,ds in incoming.items()})
         with self.lock:
             self.datasets = incoming
+            self._archive_tick_cache.clear()
             self.intelligence_engine = intelligence
+
+    def _archive_ticks_for_session(self, symbol: str, day: str):
+        """Load one verified SIP trade shard on demand, never future sessions.
+
+        Missing data return None. Bad metadata/data raise; never silently switch
+        to IEX or interpolate an unavailable profile. Only one session cached.
+        """
+        archive_path = dest_path(self.data_dir, 'sip', 'trades', symbol,
+                                 __import__('datetime').date.fromisoformat(day))
+        if not archive_path.exists():
+            return None
+        cache_key = (symbol, day)
+        if cache_key in self._archive_tick_cache:
+            self._archive_tick_cache.move_to_end(cache_key)
+            return self._archive_tick_cache[cache_key]
+        meta = read_meta_verified(archive_path)
+        if (meta['feed'],meta['kind'],meta['symbol'],meta['session']) != ('sip','trades',symbol,day):
+            raise ValueError('Trade archive provenance does not match requested session')
+        frame = load_trades(archive_path)
+        if set(frame['session']) != {day} or len(frame) != meta['rows']:
+            raise ValueError('Archived tick session/row count does not match metadata')
+        # Full raw SIP prints: trade conditions/corrections NOT yet audited.
+        source = {'sha256': meta['sha256'], 'feed':'sip', 'rows':len(frame),
+                  'is_synthetic_demo':False, 'conditions_audited':False}
+        loaded = (frame, source)
+        self._archive_tick_cache[cache_key] = loaded
+        while len(self._archive_tick_cache) > 1:
+            self._archive_tick_cache.popitem(last=False)
+        return loaded
 
     def intelligence(self, date=None):
         """Return market context frozen at the prior completed daily session."""
@@ -172,6 +207,7 @@ class ResearchStore:
                     'intraday': ds['minute_coverage'],
                     'intraday_source_sha256': ds['minute_sha256'],
                     'volume_profile': ds['trade_source'],
+                    'archive_sip_trade_dates': len(list((self.data_dir / 'archive' / 'sip' / 'trades' / sym).glob('*.csv.gz'))),
                     'is_synthetic_demo': self.data_dir.name == 'data_demo',
                 } for sym, ds in self.datasets.items()],
             }
@@ -299,15 +335,22 @@ class ResearchStore:
                 if not isinstance(index, int) or index < 0 or index >= len(day):
                     raise ValueError('bar must index a completed intraday candle')
                 cutoff = day.iloc[index]['timestamp']
-            if date not in ds['trades']:
+            archive = self._archive_ticks_for_session(sym, date)
+            if archive is not None:
+                trades_for_day, source = archive
+            elif date in ds['trades']:
+                trades_for_day, source = ds['trades'][date], ds['trade_source']
+            else:
                 return {'symbol': sym, 'date': date, 'timeframe': timeframe,
                         'available': False, 'reason': 'No executed trades file for this historical date; OHLCV is not volume-at-price',
                         'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(ds['trade_source'] and ds['trade_source'].get('is_synthetic_demo'))}
-            result = build_profile(ds['trades'][date], asof=cutoff, price_bin=price_bin)
+            result = build_profile(trades_for_day, asof=cutoff, price_bin=price_bin)
             result.update({'symbol': sym, 'date': date, 'timeframe': timeframe,
                            'asof_cutoff': cutoff.isoformat(),
-                           'source_sha256': ds['trade_source']['sha256'],
-                           'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(ds['trade_source'] and ds['trade_source'].get('is_synthetic_demo'))})
+                           'source_sha256': source['sha256'],
+                           'source_feed': source.get('feed', 'UNKNOWN'),
+                           'trade_conditions_audited': source.get('conditions_audited', False),
+                           'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(source.get('is_synthetic_demo'))})
             return result
 
     def note_list(self, symbol, date=None):
