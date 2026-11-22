@@ -140,10 +140,11 @@ def main() -> None:
     ap.add_argument('--data-dir', default='data')
     ap.add_argument('--overwrite', action='store_true')
     args = ap.parse_args()
-    key = os.getenv('APCA_API_KEY_ID')
-    secret = os.getenv('APCA_API_SECRET_KEY')
-    if not key or not secret:
-        ap.error('Missing APCA_API_KEY_ID or APCA_API_SECRET_KEY environment variables')
+    from .credentials import get_alpaca_credentials, CredentialError
+    try:
+        key, secret = get_alpaca_credentials()
+    except CredentialError as exc:
+        ap.error(str(exc))
     try:
         session = date.fromisoformat(args.date)
     except ValueError:

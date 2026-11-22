@@ -510,7 +510,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   <div class="timelineHeader"><label for="sessionSlider">SESSION</label><strong id="currentDate">—</strong><span class="progressMeta" id="sessionProgress">—</span></div>
   <div class="rangeWrap"><input type="range" id="sessionSlider" min="0" max="0" value="0" step="1" aria-label="Scrub historical trading sessions"><output id="sessionScrubTip" class="scrubTip" for="sessionSlider" hidden></output></div>
  </div>
- <div class="playOptions"><label for="playSpeed">Speed</label><select id="playSpeed" aria-label="Replay playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></div>
+ <div class="playOptions"><label for="playSpeed">Speed</label><select id="playSpeed" aria-label="Replay playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="6">6×</option><option value="8">8×</option><option value="10">10×</option></select></div>
 </div>
 <div class="barControls" id="barControls" aria-label="Intraday bar replay controls">
  <div class="transportActions">
@@ -578,7 +578,7 @@ function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className
 function availableTimeframes(sym){const row=app.info?.data?.find(x=>x.symbol===sym);return row?.timeframes||['1d'];}
 function setTimeframeOptions(){const available=availableTimeframes(app.symbol);for(const opt of $('timeframe').options){opt.disabled=!available.includes(opt.value);}if(!available.includes(app.timeframe))app.timeframe='1d';$('timeframe').value=app.timeframe;$('barControls').classList.toggle('active',app.timeframe!=='1d');const row=app.info?.data?.find(x=>x.symbol===app.symbol);const banner=$('dataBanner');if(row?.intraday){const info=row.intraday;banner.textContent=`${row.is_synthetic_demo?'SYNTHETIC DEMO — NOT MARKET DATA. ':'Imported user-supplied data. '}${app.symbol}: ${fmt(info.minute_bars)} one-minute OHLCV bars across ${info.sessions} sessions; ${info.partial_sessions} incomplete/early-close sessions. ${(row.volume_profile||row.archive_sip_trade_dates>0)?'Trade-print profile available for archived or flat-file sessions.':'No executed-trade tick feed installed.'} Never Level II.`;banner.classList.toggle('warn',info.partial_sessions>0);}else{banner.textContent=`${app.symbol}: Daily data only. Import data/intraday/${app.symbol}_1m.csv (timestamps at bar END, timezone offsets required) to enable 1m / 5m / 15m / 1H.`;banner.classList.add('warn');}}
 async function selectSymbol(sym){stop();app.symbol=sym;app.request++;setTimeframeOptions();for(const s of ['SPY','QQQ']){$('sym'+s).classList.toggle('active',sym===s);$('sym'+s).setAttribute('aria-pressed',String(sym===s));}await loadDates(false);}
-async function loadDates(keepDate){const sym=app.symbol,tf=app.timeframe,old=keepDate?app.dates[app.idx]:null;const ticket=++app.request;try{const d=await api(`/api/dates?symbol=${encodeURIComponent(sym)}&timeframe=${tf}`);if(ticket!==app.request||sym!==app.symbol||tf!==app.timeframe)return;app.dates=d.dates;app.idx=old&&d.dates.includes(old)?d.dates.indexOf(old):d.dates.length-1;app.bar=tf==='1d'?null:0;$('sessionSlider').max=String(Math.max(0,app.idx,d.dates.length-1));await show();}catch(e){if(ticket===app.request)err(e.message);}}
+async function loadDates(keepDate){const sym=app.symbol,tf=app.timeframe,old=keepDate?app.dates[app.idx]:null;const ticket=++app.request;try{const d=await api(`/api/dates?symbol=${encodeURIComponent(sym)}&timeframe=${tf}`);if(ticket!==app.request||sym!==app.symbol||tf!==app.timeframe)return;app.dates=d.dates;app.idx=old&&d.dates.includes(old)?d.dates.indexOf(old):d.dates.length-1;app.bar=null; // On timeframe switch, show the most recent completed intraday bar immediately.$('sessionSlider').max=String(Math.max(0,app.idx,d.dates.length-1));await show();}catch(e){if(ticket===app.request)err(e.message);}}
 async function selectTimeframe(tf){if(!availableTimeframes(app.symbol).includes(tf)){err(`${tf} not available; import ${app.symbol} 1-minute bars first.`);$('timeframe').value=app.timeframe;return;}stop();app.timeframe=tf;setTimeframeOptions();await loadDates(true);}
 function barTime(text){return new Date(text).toLocaleString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});}
 async function show(){const token=++app.request;const date=app.dates[app.idx];if(!date)return;clearError();try{const suffix=app.bar===null?'':`&bar=${app.bar}`;const url=`/api/frame?symbol=${encodeURIComponent(app.symbol)}&date=${date}&window=${app.window}&timeframe=${app.timeframe}${suffix}`;
@@ -618,7 +618,7 @@ async function saveNote(){const text=$('noteInput').value.trim();if(!text)return
 // Revisit cache is bounded; this viewer NEVER preloads future bars.
 const replayCache=new Map(), replayCacheLimit=22;
 let seekTimer=null, seekRaf=null;
-const replayDelay=()=>Math.max(145,Math.round(820/Number($('playSpeed').value||1)));
+const replayDelay=()=>Math.max(65,Math.round(820/Number($('playSpeed').value||1))); // 6×, 8× and 10× remain distinct targets; actual rate depends on API latency.
 function putReplayCache(key,value){if(replayCache.has(key))replayCache.delete(key);replayCache.set(key,value);if(replayCache.size>replayCacheLimit)replayCache.delete(replayCache.keys().next().value);}
 async function replayFrame(url,key){if(replayCache.has(key))return replayCache.get(key);const frame=await api(url);putReplayCache(key,frame);return frame;}
 function syncRange(id,n,max){const slider=$(id);max=Math.max(0,Number(max)||0);n=Math.max(0,Math.min(max,Number(n)||0));slider.max=String(max);slider.value=String(n);slider.style.setProperty('--filled',(max?100*n/max:0).toFixed(3)+'%');slider.setAttribute('aria-valuetext',id==='sessionSlider'?((app.dates[n]||'No session')+', '+(n+1)+' of '+app.dates.length):('Bar '+(n+1)+' of '+(max+1)));}
@@ -662,9 +662,15 @@ function queueSeek(immediate=false){
  return Promise.resolve();
 }
 function go(n,options={}){
- const k=Math.max(0,Math.min(app.dates.length-1,n));if(k===app.idx)return Promise.resolve();
- app.idx=k;app.bar=app.timeframe==='1d'?null:0;
- // No old-session profile or candle data may be shown as the new selection.
+ if(!app.dates.length)return Promise.resolve();
+ const k=Math.max(0,Math.min(app.dates.length-1,n));
+ const lastBar=options.lastBar===true;
+ // Last date must seek to the last bar even when already in the last session.
+ if(k===app.idx && !lastBar)return Promise.resolve();
+ if(k===app.idx && lastBar && (app.timeframe==='1d'||(app.frame&&app.bar===app.frame.session_bar_count-1)))return Promise.resolve();
+ app.idx=k;app.bar=(lastBar||app.timeframe==='1d')?null:0;
+ // Null bar means "latest completed bar" on the *selected* historical session.
+ // No old-session profile or candles should remain visible during the jump.
  app.frame=null;app.profile=null;syncReplayProgress();
  return options.scrub?queueSeek(!!options.final):queueSeek(true);
 }
@@ -852,7 +858,7 @@ $('window').onchange=e=>{stop();cancelQueuedSeek();app.window=Number(e.target.va
 $('firstDate').onclick=()=>{stop();cancelQueuedSeek();go(0);};
 $('prev').onclick=()=>{stop();cancelQueuedSeek();go(app.idx-1);};
 $('next').onclick=()=>{stop();cancelQueuedSeek();go(app.idx+1);};
-$('latest').onclick=()=>{stop();cancelQueuedSeek();go(app.dates.length-1);};
+$('latest').onclick=()=>{stop();cancelQueuedSeek();go(app.dates.length-1,{lastBar:true});};
 $('play').onclick=play;
 $('play').setAttribute('aria-pressed','false');
 $('playSpeed').onchange=()=>{if(app.playing){stop();play();}};
@@ -888,7 +894,7 @@ window.addEventListener('keydown',e=>{
  else if(e.key==='ArrowUp')action=()=>go(app.idx-1);
  else if(e.key==='ArrowDown')action=()=>go(app.idx+1);
  else if(e.key==='Home')action=()=>e.shiftKey?go(0):(bySession?go(0):goBar(0));
- else if(e.key==='End')action=()=>e.shiftKey?go(app.dates.length-1):(bySession?go(app.dates.length-1):goBar(app.frame?.session_bar_count-1));
+ else if(e.key==='End')action=()=>e.shiftKey?go(app.dates.length-1,{lastBar:true}):(bySession?go(app.dates.length-1,{lastBar:true}):goBar(app.frame?.session_bar_count-1));
  if(action){e.preventDefault();stop();cancelQueuedSeek();action();}
 });
 $('chart').addEventListener('mousemove',hover);
