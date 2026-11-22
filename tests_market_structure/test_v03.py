@@ -1,5 +1,6 @@
 """Workstation invariants: causal data, local-only interface, notes, no orders."""
 import json
+from contextlib import closing
 from pathlib import Path
 import tempfile
 import threading
@@ -82,7 +83,8 @@ class WorkstationTests(unittest.TestCase):
                      '/api/frame?symbol=SPY&window=999'):
             with self.assertRaises(HTTPError) as ctx:
                 self.get(path)
-            self.assertEqual(ctx.exception.code, 400)
+            with closing(ctx.exception) as error:
+                self.assertEqual(error.code, 400)
 
     def test_notes_persist_and_are_date_scoped(self):
         _, dates = self.get('/api/dates?symbol=SPY')
@@ -93,7 +95,7 @@ class WorkstationTests(unittest.TestCase):
         self.assertEqual(len(self.store.note_list('QQQ', day)['notes']), 0)
         # Reopen the actual DB without reconstructing research, to validate persistence.
         import sqlite3
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             self.assertGreaterEqual(db.execute('select count(*) from research_notes').fetchone()[0], 1)
         self.assertTrue(self.store.note_delete(note['note']['id'])['deleted'])
         self.assertEqual(self.store.note_list('SPY', day)['notes'], [])
@@ -107,12 +109,14 @@ class WorkstationTests(unittest.TestCase):
         payload = {'symbol': 'SPY', 'date': dates['dates'][0], 'content': 'A dated hypothesis'}
         with self.assertRaises(HTTPError) as forbidden:
             req('/api/notes', payload, {'Content-Type':'application/json'})
-        self.assertEqual(forbidden.exception.code, 403)
+        with closing(forbidden.exception) as error:
+            self.assertEqual(error.code, 403)
         self.assertEqual(req('/api/notes', payload,
                              {'Content-Type':'application/json', 'X-QuantDesk-Local':'1'}), 201)
         with self.assertRaises(HTTPError) as missing:
             req('/api/orders', payload, {'Content-Type':'application/json','X-QuantDesk-Local':'1'})
-        self.assertEqual(missing.exception.code, 404)
+        with closing(missing.exception) as error:
+            self.assertEqual(error.code, 404)
 
     def test_csp_and_self_contained_interface(self):
         with urlopen(self.url + '/',timeout=10) as r:
