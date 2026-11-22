@@ -1,4 +1,4 @@
-"""QuantDesk v0.4: loopback-only, research-only local workstation.
+"""QuantDesk v0.5: loopback-only, research-only local workstation.
 
 Uses the unchanged v0.1 detector and v0.2 causal replay. The browser asks for one
 historical frame at a time; candles after its requested date are NEVER returned.
@@ -23,6 +23,7 @@ import webbrowser
 from .core import Config, evaluate_symbol, load_bars
 from .replay_model import make_replay
 from .intraday import INTERVALS, load_minutes, aggregate_minutes, coverage, marks_through_bars
+from .volume_profile import load_trades, build_profile, provenance
 import pandas as pd
 
 
@@ -112,12 +113,24 @@ class ResearchStore:
                         str(day): subset.reset_index(drop=True)
                         for day, subset in aggreg.groupby('session', sort=True)
                     }
+            trades_file = self.data_dir / 'trades' / f'{sym}_trades.csv'
+            trades = {}
+            tick_source = None
+            if trades_file.exists():
+                trade_data = load_trades(trades_file)
+                unknown_ticks = sorted(set(trade_data['session']) - set(day_index))
+                if unknown_ticks:
+                    raise ValueError(f'{sym}: trade-print sessions without eligible daily levels: {unknown_ticks[:4]}')
+                tick_source = provenance(trades_file, trade_data)
+                for session, subset in trade_data.groupby('session', sort=True):
+                    trades[str(session)] = subset.reset_index(drop=True)
             incoming[sym] = {
                 'bars': bars, 'frames': frames, 'reactions': reactions, 'events': events,
                 'index': day_index, 'dates': dates,
                 'sha256': hashlib.sha256(raw).hexdigest(),
                 'intraday': intraday, 'minute_coverage': minute_coverage,
                 'minute_sha256': minute_sha256,
+                'trades': trades, 'trade_source': tick_source,
             }
         with self.lock:
             self.datasets = incoming
@@ -131,7 +144,7 @@ class ResearchStore:
     def status(self):
         with self.lock:
             return {
-                'version': '0.4', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
+                'version': '0.5', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
                 'broker_connected': False, 'orders_enabled': False, 'live_prices': False,
                 'replay_rule': 't-day map uses completed bars through t-1',
                 'data': [{
@@ -141,6 +154,7 @@ class ResearchStore:
                     'timeframes': ['1d'] + list(ds['intraday']),
                     'intraday': ds['minute_coverage'],
                     'intraday_source_sha256': ds['minute_sha256'],
+                    'volume_profile': ds['trade_source'],
                     'is_synthetic_demo': self.data_dir.name == 'data_demo',
                 } for sym, ds in self.datasets.items()],
             }
@@ -242,6 +256,43 @@ class ResearchStore:
                 'source': '1-minute RTH OHLCV; derived timeframes, not tick-by-tick volume profile',
             }
 
+    def volume_profile(self, symbol, date=None, timeframe='1d', bar=None, price_bin='0.05'):
+        """Point-in-time trade-derived session profile, never a candle estimate.
+
+        Daily selected dates are finished sessions; intraday cutoff is the end
+        of the requested completed bar, not the clock at which API is called.
+        """
+        with self.lock:
+            sym = self._symbol(symbol)
+            ds = self.datasets[sym]
+            date = date or ds['dates'][-1]
+            if not isinstance(date, str) or not DATE_RE.fullmatch(date) or date not in ds['index']:
+                raise ValueError('Date is not an eligible historical research session')
+            if timeframe == '1d':
+                if bar is not None:
+                    raise ValueError('bar index is only allowed with intraday timeframe')
+                cutoff = pd.Timestamp(f'{date} 16:00:00', tz='America/New_York')
+            else:
+                if timeframe not in INTERVALS or timeframe not in ds['intraday']:
+                    raise ValueError(f'{sym}: {timeframe} intraday minute bars unavailable')
+                day = ds['intraday'][timeframe].get(date)
+                if day is None:
+                    raise ValueError('Date is not an imported intraday session')
+                index = len(day)-1 if bar is None else bar
+                if not isinstance(index, int) or index < 0 or index >= len(day):
+                    raise ValueError('bar must index a completed intraday candle')
+                cutoff = day.iloc[index]['timestamp']
+            if date not in ds['trades']:
+                return {'symbol': sym, 'date': date, 'timeframe': timeframe,
+                        'available': False, 'reason': 'No executed trades file for this historical date; OHLCV is not volume-at-price',
+                        'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(ds['trade_source'] and ds['trade_source'].get('is_synthetic_demo'))}
+            result = build_profile(ds['trades'][date], asof=cutoff, price_bin=price_bin)
+            result.update({'symbol': sym, 'date': date, 'timeframe': timeframe,
+                           'asof_cutoff': cutoff.isoformat(),
+                           'source_sha256': ds['trade_source']['sha256'],
+                           'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(ds['trade_source'] and ds['trade_source'].get('is_synthetic_demo'))})
+            return result
+
     def note_list(self, symbol, date=None):
         sym = self._symbol(symbol)
         if date is not None and (not DATE_RE.fullmatch(date) or date not in self.datasets[sym]['index']):
@@ -282,7 +333,7 @@ class ResearchStore:
 def make_handler(store: ResearchStore, port: int):
     """Factory supplies testable, isolated handlers for the stdlib server."""
     class Handler(BaseHTTPRequestHandler):
-        server_version = 'QuantDeskLocal/0.4'
+        server_version = 'QuantDeskLocal/0.5'
 
         def log_message(self, fmt, *args):
             # Suppress request logs; journal text and URL query parameters stay private.
@@ -351,6 +402,10 @@ def make_handler(store: ResearchStore, port: int):
                     raw_bar = query.get('bar', [None])[0]
                     bar = None if raw_bar is None else int(raw_bar)
                     self._json(200, store.frame(sym, date, w, timeframe, bar))
+                elif info.path == '/api/profile':
+                    raw_bar = query.get('bar', [None])[0]
+                    bar = None if raw_bar is None else int(raw_bar)
+                    self._json(200, store.volume_profile(sym, date, timeframe, bar, query.get('price_bin',['0.05'])[0]))
                 elif info.path == '/api/notes':
                     self._json(200, store.note_list(sym, date))
                 else:
@@ -395,7 +450,7 @@ def make_handler(store: ResearchStore, port: int):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QuantDesk v0.4 local-only research workstation. NO ORDERS.')
+    parser = argparse.ArgumentParser(description='QuantDesk v0.5 local-only research workstation. NO ORDERS.')
     parser.add_argument('--data-dir', default='data', help='Folder containing SPY.csv and QQQ.csv')
     parser.add_argument('--db', default='outputs/v03_workstation/research_notes.sqlite', help='Local SQLite note journal')
     parser.add_argument('--port', type=int, default=8765)
@@ -408,7 +463,7 @@ def main():
     server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port))
     server.daemon_threads = True
     url = f'http://127.0.0.1:{args.port}/'
-    print('\nQuantDesk Market Structure Workstation v0.4')
+    print('\nQuantDesk Market Structure Workstation v0.5')
     print('URL:', url)
     print('Mode: LOCALHOST ONLY | HISTORICAL RESEARCH | NO BROKER | NO ORDERS')
     for entry in store.status()['data']:
@@ -419,6 +474,11 @@ def main():
                   f"{entry['intraday']['partial_sessions']} incomplete/early-close sessions")
         else:
             print(f" {entry['symbol']} intraday: none; 1m/5m/15m/1h disabled until imported")
+    for entry in store.status()['data']:
+        if entry['volume_profile']:
+            print(f" {entry['symbol']} executed trade prints: {entry['volume_profile']['trade_prints']} across {entry['volume_profile']['sessions']} dates")
+        else:
+            print(f" {entry['symbol']} trade prints: none; profile panel will say unavailable")
     print('Research notes SQLite:', Path(args.db).resolve())
     print('Press Ctrl+C to stop the local server.\n', flush=True)
     if not args.no_browser:

@@ -22,3 +22,8 @@ jobs:
         run: python -m unittest discover -s tests_market_structure -v
       - name: Generate synthetic demo
         run: python -m market_structure_lab.demo --output-dir data_demo
+      - name: Generate synthetic intraday and executed-print demo
+        run: |
+          python -m market_structure_lab.intraday_demo --data-dir data_demo --days 2
+          python -m market_structure_lab.volume_profile_demo --data-dir data_demo
+          python -c "from market_structure_lab.volume_profile import load_trades,build_profile; t=load_trades('data_demo/trades/SPY_trades.csv'); p=build_profile(t[t.session==t.session.iloc[-1]]); assert p['volume_shares'] > 0"

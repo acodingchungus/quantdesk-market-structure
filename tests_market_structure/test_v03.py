@@ -83,8 +83,8 @@ class WorkstationTests(unittest.TestCase):
                      '/api/frame?symbol=SPY&window=999'):
             with self.assertRaises(HTTPError) as ctx:
                 self.get(path)
-            with closing(ctx.exception) as error:
-                self.assertEqual(error.code, 400)
+            self.assertEqual(ctx.exception.code, 400)
+            ctx.exception.close()
 
     def test_notes_persist_and_are_date_scoped(self):
         _, dates = self.get('/api/dates?symbol=SPY')
@@ -109,14 +109,14 @@ class WorkstationTests(unittest.TestCase):
         payload = {'symbol': 'SPY', 'date': dates['dates'][0], 'content': 'A dated hypothesis'}
         with self.assertRaises(HTTPError) as forbidden:
             req('/api/notes', payload, {'Content-Type':'application/json'})
-        with closing(forbidden.exception) as error:
-            self.assertEqual(error.code, 403)
+        self.assertEqual(forbidden.exception.code, 403)
+        forbidden.exception.close()
         self.assertEqual(req('/api/notes', payload,
                              {'Content-Type':'application/json', 'X-QuantDesk-Local':'1'}), 201)
         with self.assertRaises(HTTPError) as missing:
             req('/api/orders', payload, {'Content-Type':'application/json','X-QuantDesk-Local':'1'})
-        with closing(missing.exception) as error:
-            self.assertEqual(error.code, 404)
+        self.assertEqual(missing.exception.code, 404)
+        missing.exception.close()
 
     def test_csp_and_self_contained_interface(self):
         with urlopen(self.url + '/',timeout=10) as r:
