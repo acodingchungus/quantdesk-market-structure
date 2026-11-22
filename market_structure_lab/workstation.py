@@ -1,4 +1,4 @@
-"""QuantDesk v0.5: loopback-only, research-only local workstation.
+"""QuantDesk v0.6: loopback-only, research-only local workstation.
 
 Uses the unchanged v0.1 detector and v0.2 causal replay. The browser asks for one
 historical frame at a time; candles after its requested date are NEVER returned.
@@ -24,6 +24,8 @@ from .core import Config, evaluate_symbol, load_bars
 from .replay_model import make_replay
 from .intraday import INTERVALS, load_minutes, aggregate_minutes, coverage, marks_through_bars
 from .volume_profile import load_trades, build_profile, provenance
+from .market_intelligence import MarketIntelligence
+from .live_tape import LiveTape
 import pandas as pd
 
 
@@ -132,8 +134,21 @@ class ResearchStore:
                 'minute_sha256': minute_sha256,
                 'trades': trades, 'trade_source': tick_source,
             }
+        intelligence = MarketIntelligence(self.data_dir, {s: ds['bars'] for s,ds in incoming.items()})
         with self.lock:
             self.datasets = incoming
+            self.intelligence_engine = intelligence
+
+    def intelligence(self, date=None):
+        """Return market context frozen at the prior completed daily session."""
+        with self.lock:
+            anchor = self.datasets['SPY']
+            date = date or anchor['dates'][-1]
+            if not isinstance(date,str) or not DATE_RE.fullmatch(date) or date not in anchor['index']:
+                raise ValueError('Research date must be an eligible SPY historical session')
+            frozen = anchor['frames'][anchor['index'][date]]['map_asof_date']
+            # Never use same-day close as evidence at the start of the session.
+            return self.intelligence_engine.snapshot(frozen, requested_session=date)
 
     def _symbol(self, symbol):
         sym = (symbol or '').upper()
@@ -144,8 +159,10 @@ class ResearchStore:
     def status(self):
         with self.lock:
             return {
-                'version': '0.5', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
+                'version': '0.6', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
                 'broker_connected': False, 'orders_enabled': False, 'live_prices': False,
+                'workspaces': ['live','replay','research'],
+                'context_symbols_loaded': sorted(self.intelligence_engine.hashes),
                 'replay_rule': 't-day map uses completed bars through t-1',
                 'data': [{
                     'symbol': sym, 'start': ds['dates'][0], 'end': ds['dates'][-1],
@@ -330,10 +347,10 @@ class ResearchStore:
             return {'deleted': bool(cursor.rowcount)}
 
 
-def make_handler(store: ResearchStore, port: int):
+def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
     """Factory supplies testable, isolated handlers for the stdlib server."""
     class Handler(BaseHTTPRequestHandler):
-        server_version = 'QuantDeskLocal/0.5'
+        server_version = 'QuantDeskLocal/0.6'
 
         def log_message(self, fmt, *args):
             # Suppress request logs; journal text and URL query parameters stay private.
@@ -394,7 +411,13 @@ def make_handler(store: ResearchStore, port: int):
                 date = query.get('date', [None])[0]
                 timeframe = query.get('timeframe', ['1d'])[0]
                 if info.path == '/api/status':
-                    self._json(200, store.status())
+                    status = store.status()
+                    if live is not None:
+                        state = live.snapshot()
+                        status['live_prices'] = state['enabled']
+                        status['live_feed_scope'] = state['scope']
+                        status['live_connection'] = state['connection']
+                    self._json(200, status)
                 elif info.path == '/api/dates':
                     self._json(200, store.dates(sym, timeframe))
                 elif info.path == '/api/frame':
@@ -406,6 +429,10 @@ def make_handler(store: ResearchStore, port: int):
                     raw_bar = query.get('bar', [None])[0]
                     bar = None if raw_bar is None else int(raw_bar)
                     self._json(200, store.volume_profile(sym, date, timeframe, bar, query.get('price_bin',['0.05'])[0]))
+                elif info.path == '/api/intelligence':
+                    self._json(200, store.intelligence(date))
+                elif info.path == '/api/live':
+                    self._json(200, (live or LiveTape()).snapshot())
                 elif info.path == '/api/notes':
                     self._json(200, store.note_list(sym, date))
                 else:
@@ -450,20 +477,27 @@ def make_handler(store: ResearchStore, port: int):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QuantDesk v0.5 local-only research workstation. NO ORDERS.')
+    parser = argparse.ArgumentParser(description='QuantDesk v0.6 local research workstation. NO ORDERS.')
     parser.add_argument('--data-dir', default='data', help='Folder containing SPY.csv and QQQ.csv')
     parser.add_argument('--db', default='outputs/v03_workstation/research_notes.sqlite', help='Local SQLite note journal')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--enable-live', action='store_true', help='Explicitly opt in to read-only Alpaca WebSocket stock data')
+    parser.add_argument('--live-feed', choices=['iex','sip'], default='iex', help='SIP requires suitable streaming entitlement')
+    parser.add_argument('--live-symbols', default='SPY,QQQ', help='Comma-separated allowed read-only stream symbols')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('--port must be between 1024 and 65535')
     print('Loading SPY and QQQ historical data and calculating causal zone maps...', flush=True)
     store = ResearchStore(args.data_dir, args.db)
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port))
+    live = LiveTape(tuple(x.strip().upper() for x in args.live_symbols.split(',')), args.live_feed)
+    if args.enable_live:
+        # Fail before starting the local web server if credentials are missing.
+        live.start()
+    server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port, live))
     server.daemon_threads = True
     url = f'http://127.0.0.1:{args.port}/'
-    print('\nQuantDesk Market Structure Workstation v0.5')
+    print('\nQuantDesk Market Structure Workstation v0.6')
     print('URL:', url)
     print('Mode: LOCALHOST ONLY | HISTORICAL RESEARCH | NO BROKER | NO ORDERS')
     for entry in store.status()['data']:
@@ -480,6 +514,8 @@ def main():
         else:
             print(f" {entry['symbol']} trade prints: none; profile panel will say unavailable")
     print('Research notes SQLite:', Path(args.db).resolve())
+    print('Live observation feed:', (args.live_feed.upper() if args.enable_live else 'OFF'), '| NO ORDERS')
+    print('Context symbols:', ', '.join(store.status()['context_symbols_loaded']) or '(none installed)')
     print('Press Ctrl+C to stop the local server.\n', flush=True)
     if not args.no_browser:
         webbrowser.open(url)
@@ -488,6 +524,7 @@ def main():
     except KeyboardInterrupt:
         print('\nShutting down QuantDesk local server.')
     finally:
+        live.stop()
         server.server_close()
 
 

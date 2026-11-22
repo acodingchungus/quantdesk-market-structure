@@ -4,3 +4,5 @@ matplotlib>=3.7,<4
 tzdata>=2022.7
 # Optional READ ONLY historical data downloader, no broker orders:
 # alpaca-py>=0.30
+# Opt-in read-only Alpaca live stream; no trading/order SDK:
+websocket-client>=1.8,<2
