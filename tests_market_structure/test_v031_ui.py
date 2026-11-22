@@ -9,9 +9,9 @@ class WorkstationThemeTests(unittest.TestCase):
     def setUpClass(cls):
         cls.page = UI.read_text(encoding='utf-8')
 
-    def test_graphite_palette_and_canvas_reuse(self):
-        for token in ('--surface-app: #08090B', '--surface-panel: #15191E', '--surface-inset: #0C0F12',
-                      '--positive: #2ED47A', '--negative: #FF5A5F', '--caution: #F5C451'):
+    def test_midnight_palette_and_canvas_reuse(self):
+        for token in ('--surface-app: #030504', '--surface-panel: #101310', '--surface-inset: #090B09',
+                      '--positive: #22DB58', '--negative: #FF5A5F', '--caution: #F5C451'):
             self.assertIn(token, self.page)
         self.assertIn("plot:cssColor('--plot')", self.page)
         self.assertIn('c.fillStyle=palette.plot', self.page)

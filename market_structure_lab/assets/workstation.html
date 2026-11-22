@@ -1,36 +1,36 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QuantDesk v0.6.1 · Graphite Terminal</title>
+<title>QuantDesk v0.6.2 · Midnight Graphite</title>
 <style>
-/* QuantDesk v0.6.1 — Graphite Terminal. Self-contained CSS and JS; no remote assets. */
+/* QuantDesk v0.6.2 — Midnight Graphite. Self-contained CSS and JS; no remote assets. */
 :root {
   color-scheme: dark;
-  --surface-app: #08090B;
-  --surface-shell: #101317;
-  --surface-panel: #15191E;
-  --surface-raised: #1B2026;
-  --surface-inset: #0C0F12;
-  --surface-hover: #23292F;
-  --stroke-subtle: #262C33;
-  --stroke-base: #343C45;
-  --stroke-strong: #4A5561;
-  --ink-primary: #F5F7F8;
-  --ink-secondary: #D4D9DD;
-  --ink-muted: #9EA8B1;
-  --positive: #2ED47A;
-  --positive-hover: #43E08A;
-  --positive-surface: #153524;
+  --surface-app: #030504;
+  --surface-shell: #080A09;
+  --surface-panel: #101310;
+  --surface-raised: #181D19;
+  --surface-inset: #090B09;
+  --surface-hover: #202720;
+  --stroke-subtle: #222A24;
+  --stroke-base: #354137;
+  --stroke-strong: #4C5B4F;
+  --ink-primary: #F7FAF7;
+  --ink-secondary: #D8E0D9;
+  --ink-muted: #9FADA1;
+  --positive: #22DB58;
+  --positive-hover: #37F071;
+  --positive-surface: #10341D;
   --negative: #FF5A5F;
   --negative-surface: #341C20;
   --caution: #F5C451;
   --caution-surface: #332B19;
-  --focus-ring: #43E08A;
-  --chart-grid: #293039;
-  --chart-neutral-zone: #ADB6BE;
-  --chart-supported-zone: #2ED47A;
-  --chart-value-area: #78838E;
-  --chart-crosshair: #AAB3BA;
+  --focus-ring: #37F071;
+  --chart-grid: #202923;
+  --chart-neutral-zone: #A9B9AC;
+  --chart-supported-zone: #22DB58;
+  --chart-value-area: #9EAEA0;
+  --chart-crosshair: #AFBDB1;
   /* Current UI aliases, so existing selectors keep working. */
   --bg: var(--surface-app);
   --shell: var(--surface-shell);
@@ -43,7 +43,7 @@
   --text-secondary: var(--ink-secondary);
   --text-muted: var(--ink-muted);
   --accent: var(--positive);
-  --accent-soft: rgba(46, 212, 122, .12);
+  --accent-soft: rgba(34, 219, 88, .12);
   --bull: var(--positive);
   --bear: var(--negative);
   --warn: var(--caution);
@@ -73,7 +73,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 button:disabled { opacity: .43; cursor: not-allowed; }
 button:active:not(:disabled) { transform: translateY(1px); }
-::selection { background: rgba(46, 212, 122, .22); color: var(--text); }
+::selection { background: rgba(34, 219, 88, .22); color: var(--text); }
 
 /* Header */
 header {
@@ -176,7 +176,7 @@ button, .btn {
 }
 button:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--stroke-strong); }
 button.primary { background: var(--positive-surface); border-color: var(--positive); color: var(--ink-primary); font-weight: 650; }
-button.primary:hover:not(:disabled) { background: #1C4930; border-color: var(--positive-hover); }
+button.primary:hover:not(:disabled) { background: #18512A; border-color: var(--positive-hover); }
 
 /* Replay chart and controls */
 .chartWrap { padding: 0 16px; }
@@ -198,7 +198,7 @@ canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
   padding: 10px 12px;
   border: 1px solid var(--stroke-strong);
   border-radius: var(--radius-md);
-  background: rgba(21,25,30,.98);
+  background: rgba(13,17,14,.98);
   color: var(--text);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -238,8 +238,8 @@ select { min-height: 36px; border: 1px solid var(--stroke-base); border-radius: 
 .profileBin {display:grid;grid-template-columns:74px minmax(0,1fr) 58px;gap:6px;align-items:center;font-size:12px;min-height:20px;font-variant-numeric:tabular-nums;}
 .profileBin .price {color:var(--text-secondary);white-space:nowrap;}
 .profileBin .bar {height:11px;border-radius:2px;background:var(--surface-raised);overflow:hidden;}
-.profileBin .fill {height:100%;background:#68737F;}
-.profileBin.value .fill {background:#A0AAB3;}
+.profileBin .fill {height:100%;background:#748675;}
+.profileBin.value .fill {background:#9FAC9F;}
 .profileBin.poc .fill {background:var(--caution);}
 .profileBin .vol {text-align:right;color:var(--text-muted);}
 .profileBin.poc .price {color:var(--caution);font-weight:bold;}
@@ -352,7 +352,7 @@ select { min-height: 36px; border: 1px solid var(--stroke-base); border-radius: 
 .dangerText {color:var(--negative);} .goodText {color:var(--positive);}
 @media(max-width:760px){.researchGrid{grid-template-columns:1fr}.workspaceNote{display:none}.workspaceTabs button{flex:1 1 30%;min-width:90px;padding:9px 5px;font-size:11px}}
 
-/* v0.6.1 Graphite Terminal: compact high-contrast production finish */
+/* v0.6.2 Midnight Graphite: crisp high-contrast production finish */
 :root { accent-color: var(--positive); }
 body { font-size: 13px; }
 header { border-bottom-color: var(--stroke-base); }
@@ -361,7 +361,7 @@ header { border-bottom-color: var(--stroke-base); }
 .workspaceTabs button.active, .symbols button.active { color: var(--ink-primary); background:var(--positive-surface); border:1px solid var(--positive); box-shadow: inset 0 -2px 0 var(--positive); }
 .workspaceTabs button:not(.active):hover, .symbols button:not(.active):hover { background: var(--surface-hover); border-color:var(--stroke-strong); }
 button.primary { border-color:var(--positive); color:var(--ink-primary); background:var(--positive-surface); }
-button.primary:hover:not(:disabled) { background:#1C4930; border-color:var(--positive-hover); }
+button.primary:hover:not(:disabled) { background:#18512A; border-color:var(--positive-hover); }
 button:disabled { opacity:.55; }
 .profileBin { grid-template-columns: 80px minmax(0,1fr) 66px; min-height:23px; font-size:11px; }
 .profileBin.poc .price, .profileBin.poc .vol { color:var(--caution); font-weight:700; }
@@ -379,7 +379,7 @@ button:disabled { opacity:.55; }
 .dataBanner.warn { border-left:3px solid var(--caution); color:var(--ink-secondary); }
 .dataBanner { font-size:12px; }
 .chartLegend { color:var(--ink-secondary); font-size:12px; }
-#hover { font-size:12px; max-width:280px; border:1px solid var(--stroke-strong); background:rgba(21,25,30,.98); }
+#hover { font-size:12px; max-width:280px; border:1px solid var(--stroke-strong); background:rgba(13,17,14,.98); }
 select, .researchDateInput, .journal textarea { background:var(--surface-inset); color:var(--ink-primary); border:1px solid var(--stroke-base); border-radius:var(--radius-md); }
 select:hover, .researchDateInput:hover, .journal textarea:hover { border-color:var(--stroke-strong); }
 .researchDateInput { padding:8px 10px; min-height:38px; color-scheme:dark; }
@@ -406,6 +406,61 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   #assetMatrix { max-height:none; }
 }
 @media (max-width: 375px) { .workspaceTabs button { flex:1 1 100%; } .profileBin {grid-template-columns:76px minmax(0,1fr) 60px;} }
+
+/* v0.6.2 — responsive transport, precise drag feedback, keyboard focus, clearer range progress */
+.replayRail,.barControls.active {display:grid;grid-template-columns: minmax(0,auto) minmax(230px,1fr) auto;column-gap:16px;row-gap:10px;align-items:center;}
+.replayRail {padding:15px 18px;}
+.barControls.active {padding:14px 18px;background:var(--surface-inset);}
+.transportActions {display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.replayRail .iconBtn,.barControls .iconBtn {width:38px;min-width:38px;max-width:38px;padding:7px 0;}
+.transportActions button {white-space:nowrap;min-height:37px;}
+.transportActions button.smallJump {min-width:43px;padding:7px 8px;color:var(--ink-secondary);font-variant-numeric:tabular-nums;}
+.transportActions button[aria-label] {touch-action:manipulation;}
+.timelineGroup {display:flex;flex-direction:column;gap:6px;min-width:0;flex:1;}
+.timelineHeader {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-muted);}
+.timelineHeader strong {color:var(--ink-primary);font-size:12px;font-variant-numeric:tabular-nums;}
+.timelineHeader .progressMeta {color:var(--ink-secondary);font-size:11px;font-variant-numeric:tabular-nums;}
+.rangeWrap {position:relative;display:flex;align-items:center;min-width:0;padding:7px 0;}
+.rangeWrap input[type=range] {
+  width:100%;min-width:0;flex:1;order:initial;cursor:ew-resize;appearance:none;-webkit-appearance:none;
+  background:linear-gradient(to right,var(--positive) 0%,var(--positive) var(--filled,0%),var(--stroke-base) var(--filled,0%),var(--stroke-base) 100%);
+  height:7px;border:0;border-radius:999px;outline-offset:5px;touch-action:pan-y;
+}
+.rangeWrap input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;appearance:none;width:17px;height:17px;border:3px solid var(--positive);background:var(--surface-app);
+  border-radius:50%;box-shadow:0 0 0 2px var(--surface-panel);cursor:grab;
+}
+.rangeWrap input[type=range]:active::-webkit-slider-thumb {cursor:grabbing;background:var(--positive);}
+.rangeWrap input[type=range]::-moz-range-thumb {width:12px;height:12px;border:3px solid var(--positive);background:var(--surface-app);border-radius:50%;cursor:grab;}
+.rangeWrap input[type=range]:focus-visible {outline:2px solid var(--positive);outline-offset:8px;}
+.scrubTip {
+ position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);pointer-events:none;
+ z-index:10;white-space:nowrap;max-width:min(260px,95vw);padding:7px 10px;border:1px solid var(--stroke-strong);
+ background:var(--surface-raised);border-radius:4px;color:var(--ink-primary);font-size:11px;font-variant-numeric:tabular-nums;
+ box-shadow:0 8px 18px rgba(0,0,0,.65);
+}
+.scrubTip[hidden]{display:none!important;}
+.playOptions {display:flex;align-items:center;gap:7px;justify-content:flex-end;white-space:nowrap;}
+.playOptions label {color:var(--ink-muted);font-size:11px;}
+.playOptions select {min-height:35px;padding:5px 7px;font-weight:700;}
+.keyHints {padding:8px 17px 12px;border-top:1px solid var(--line-soft);color:var(--ink-muted);font-size:11px;line-height:2;}
+.keyHints kbd {font:inherit;display:inline-block;border:1px solid var(--stroke-base);border-bottom-color:var(--stroke-strong);background:var(--surface-inset);color:var(--ink-primary);padding:1px 5px;border-radius:3px;line-height:1.4;}
+.replayRail .playButton {border-color:var(--positive);color:var(--ink-primary);background:var(--positive-surface);min-width:79px;}
+@media (max-width:1180px){
+ .replayRail,.barControls.active {grid-template-columns:1fr;}
+ .playOptions {justify-content:flex-start;}
+ .timelineGroup {order:2;}
+ .playOptions {order:3;}
+}
+@media (max-width:699px){
+ .replayRail,.barControls.active {padding:12px 10px;gap:12px;}
+ .transportActions {gap:5px;}
+ .transportActions button {min-height:44px;}
+ .replayRail .iconBtn,.barControls .iconBtn {width:38px;min-width:38px;}
+ .rangeWrap input[type=range] {min-height:7px;flex-basis:auto;order:initial;}
+ .keyHints {padding:8px 10px 10px;font-size:10px;}
+ .timelineHeader {gap:6px;}
+}
 </style></head>
 <body>
 <header><div class="brand"><div class="mark" aria-hidden="true">Q</div><div><h1>QuantDesk <span class="suffix">/ Market Structure Workstation</span></h1><p>Local Python research engine · browser dashboard · SQLite journal</p></div></div><div class="tags"><span class="chip safe"><span class="dot" aria-hidden="true"></span>127.0.0.1 LOCAL</span><span class="chip" id="modeBadge">HISTORICAL DATA</span><span class="chip">NO BROKER / NO ORDERS</span></div></header>
@@ -419,12 +474,40 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 </nav>
 <section id="replayWorkspace" aria-label="Historical replay">
 <section class="stats"><div class="stat"><small>Selected session closing price</small><strong id="lastPrice">—</strong><span id="lastSymbol">—</span></div><div class="stat"><small>Known daily zones before session open</small><strong id="zoneCount">—</strong><span>Prior-session-only KDE estimates</span></div><div class="stat"><small>Completed-session reactions</small><strong id="reactCount">—</strong><span>Descriptive labels, not trade fills</span></div><div class="stat"><small>Data coverage</small><strong id="coverage">—</strong><span id="dataTag">Historical OHLCV (no live feed)</span></div></section>
-<div class="layout"><section class="panel"><div class="paneHead"><div><h2>Price-reaction replay <span class="version">v0.6.1</span></h2><div id="asof" class="sub">Loading historical SPY/QQQ series…</div></div><div class="group"><div class="symbols"><button id="symSPY" data-symbol="SPY" class="active" aria-pressed="true">SPY</button><button id="symQQQ" data-symbol="QQQ" aria-pressed="false">QQQ</button></div><span id="tfControls"><label class="sub" for="timeframe">Timeframe</label><select id="timeframe"><option value="1d" selected>1D</option><option value="1h">1H</option><option value="15m">15m</option><option value="5m">5m</option><option value="1m">1m</option></select></span><label class="sub" for="window">Window</label><select id="window"><option value="40">40 bars</option><option value="80" selected>80 bars</option><option value="160">160 bars</option></select></div></div>
+<div class="layout"><section class="panel"><div class="paneHead"><div><h2>Price-reaction replay <span class="version">v0.6.2</span></h2><div id="asof" class="sub">Loading historical SPY/QQQ series…</div></div><div class="group"><div class="symbols"><button id="symSPY" data-symbol="SPY" class="active" aria-pressed="true">SPY</button><button id="symQQQ" data-symbol="QQQ" aria-pressed="false">QQQ</button></div><span id="tfControls"><label class="sub" for="timeframe">Timeframe</label><select id="timeframe"><option value="1d" selected>1D</option><option value="1h">1H</option><option value="15m">15m</option><option value="5m">5m</option><option value="1m">1m</option></select></span><label class="sub" for="window">Window</label><select id="window"><option value="40">40 bars</option><option value="80" selected>80 bars</option><option value="160">160 bars</option></select></div></div>
 <div id="dataBanner" class="dataBanner" role="status">Daily replay is available. Import time-stamped 1-minute OHLCV into data/intraday/ for intraday replay.</div>
 <div class="chartWrap"><div class="chartOuter"><canvas id="chart" aria-label="Historical candlestick chart with point-in-time price zones and volume"></canvas><div id="hover" role="tooltip"></div></div></div>
 <div class="chartLegend" aria-label="Chart legend"><span><span class="legendKey"></span>Above selected price</span><span><span class="legendKey support"></span>At/below selected price</span><span><span class="legendKey reaction"></span>Failed breakout marker</span><span><span class="legendKey poc"></span>Executed-tick POC (when available)</span></div>
-<div class="controls"><button id="prev" class="iconBtn" title="Previous session" aria-label="Previous session">◀</button><button id="play">▶ Play</button><button id="next" class="iconBtn" title="Next session" aria-label="Next session">▶</button><input type="range" id="sessionSlider" min="0" max="0" value="0" step="1" aria-label="Replay historical sessions"><span id="currentDate">—</span><button id="latest" title="Jump to last available historical date">Last date</button></div>
-<div class="barControls" id="barControls"><button id="barPrev" class="iconBtn" aria-label="Previous completed bar">◀</button><button id="barNext" class="iconBtn" aria-label="Next completed bar">▶</button><input type="range" id="barSlider" min="0" max="0" value="0" step="1" aria-label="Replay completed intraday bars"><span id="barStamp" class="sub">—</span><button id="barLast">Last bar</button></div>
+<div class="controls replayRail" aria-label="Session replay controls">
+ <div class="transportActions">
+  <button id="firstDate" class="iconBtn" title="First available session (Shift+Home)" aria-label="First session">⏮</button>
+  <button id="prev" class="iconBtn" title="Previous session (↑)" aria-label="Previous session">◀</button>
+  <button id="play" class="playButton" title="Play / pause (Space)">▶ Play</button>
+  <button id="next" class="iconBtn" title="Next session (↓)" aria-label="Next session">▶</button>
+  <button id="latest" title="Jump to last available historical date (Shift+End)">Last date</button>
+ </div>
+ <div class="timelineGroup">
+  <div class="timelineHeader"><label for="sessionSlider">SESSION</label><strong id="currentDate">—</strong><span class="progressMeta" id="sessionProgress">—</span></div>
+  <div class="rangeWrap"><input type="range" id="sessionSlider" min="0" max="0" value="0" step="1" aria-label="Scrub historical trading sessions"><output id="sessionScrubTip" class="scrubTip" for="sessionSlider" hidden></output></div>
+ </div>
+ <div class="playOptions"><label for="playSpeed">Speed</label><select id="playSpeed" aria-label="Replay playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></div>
+</div>
+<div class="barControls" id="barControls" aria-label="Intraday bar replay controls">
+ <div class="transportActions">
+  <button id="barFirst" class="iconBtn" title="First intraday bar (Home)" aria-label="First completed bar">⏮</button>
+  <button id="barBack5" class="smallJump" title="Back five bars (Shift+←)">−5</button>
+  <button id="barPrev" class="iconBtn" title="Previous bar (←)" aria-label="Previous completed bar">◀</button>
+  <button id="barNext" class="iconBtn" title="Next bar (→)" aria-label="Next completed bar">▶</button>
+  <button id="barForward5" class="smallJump" title="Forward five bars (Shift+→)">+5</button>
+  <button id="barLast" title="Last completed bar (End)">Last bar</button>
+ </div>
+ <div class="timelineGroup">
+  <div class="timelineHeader"><label for="barSlider">INTRADAY</label><strong id="barStamp">—</strong><span class="progressMeta" id="barProgress">—</span></div>
+  <div class="rangeWrap"><input type="range" id="barSlider" min="0" max="0" value="0" step="1" aria-label="Scrub completed intraday bars"><output id="barScrubTip" class="scrubTip" for="barSlider" hidden></output></div>
+ </div>
+ <div class="playOptions"><span class="sub">Frozen prior-day levels</span></div>
+</div>
+<div class="keyHints" aria-label="Replay keyboard shortcuts">Keyboard: <kbd>←</kbd>/<kbd>→</kbd> bar · <kbd>Shift</kbd>+<kbd>←</kbd>/<kbd>→</kbd> ±5 bars · <kbd>↑</kbd>/<kbd>↓</kbd> session · <kbd>Home</kbd>/<kbd>End</kbd> first/last bar · <kbd>Shift</kbd>+<kbd>Home</kbd>/<kbd>End</kbd> first/last session · <kbd>Space</kbd> play/pause. Shortcuts are disabled while editing notes or using other workspaces.</div>
 <div class="explanation">The chart requests one historical session at a time from your local Python server. Daily zones are frozen from completed day <em>t−1</em>. On intraday replay, each visible candle is a completed timestamped bar; later bars in that session are hidden. Missing-minute and early-close sessions are marked as incomplete, never filled synthetically. 1-minute OHLCV is not executable order flow or options quotes. Separate executed trade prints (when supplied) power the v0.5 profile.</div></section>
 <div class="sideCol"><div class="panel"><div class="sideHead"><h3>Known price zones</h3><small id="zonesLabel">—</small></div><div class="zones" id="zones"></div><div class="sideHead" style="padding-top:9px"><h3>That session's reactions</h3><small id="reactionsLabel"></small></div><div class="activity" id="activity"></div></div>
 <div class="panel"><div class="sideHead"><h3>Executed-trade volume profile</h3><small id="profileLabel">—</small></div>
@@ -434,29 +517,29 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 </section>
 <section id="liveWorkspace" class="workspace" hidden aria-label="Live observation market">
 <div class="workspaceBody panel">
-<div class="workspaceHead"><div><h2>Live market monitor <span class="version">v0.6.1</span></h2><div class="sub">Opt-in, read-only Alpaca stock data · never used as historical backtest input</div></div><span id="liveConnection" class="chip">STREAM DISABLED</span></div>
+<div class="workspaceHead"><div><h2>Live market monitor <span class="version">v0.6.2</span></h2><div class="sub">Opt-in, read-only Alpaca stock data · never used as historical backtest input</div></div><span id="liveConnection" class="chip">STREAM DISABLED</span></div>
 <div id="liveCaution" class="warnLine">Real-time streaming is disabled until you restart the workstation with --enable-live. Historical prices are never presented as live.</div>
 <div class="researchGrid"><section><h3>Stream status</h3><div id="liveStatus" class="marketRows" role="status" aria-live="polite">Loading source and freshness status…</div><p style="font-size:11px">IEX is a single exchange, not consolidated US equity market volume. SIP requires a separate streaming entitlement. No trades or orders can be submitted.</p></section>
 <section><h3>Last observed trade / quote / bar</h3><div id="livePrices" class="marketRows">No live observations received.</div></section></div>
 </div></section>
 <section id="researchWorkspace" class="workspace" hidden aria-label="Historical market intelligence">
 <div class="workspaceBody panel">
-<div class="workspaceHead"><div><h2>Market intelligence <span class="version">v0.6.1</span></h2><div class="sub">Point-in-time daily returns · realized volatility · index correlation · sector relative strength</div></div>
+<div class="workspaceHead"><div><h2>Market intelligence <span class="version">v0.6.2</span></h2><div class="sub">Point-in-time daily returns · realized volatility · index correlation · sector relative strength</div></div>
 <div class="group"><label class="sub" for="researchDate">Research session</label><input id="researchDate" type="date" class="researchDateInput"/><button id="researchRefresh" type="button">Analyze</button><button id="researchUseReplay" type="button">Replay date</button></div></div>
 <div class="warnLine">These indicators use only the LAST COMPLETED daily session before the selected research date. No same-day future closes, intraday VIX, or missing sector prices are invented. They are descriptive statistics, not signals to buy or sell.</div>
 <div id="researchAsOf" class="sub" style="margin-bottom:14px">Loading…</div>
 <div class="researchGrid"><section><h3>Regime diagnostics</h3><div id="regimeMetrics" class="marketRows"></div><h3>20-session comparison</h3><div id="researchComparison" class="marketRows"></div></section><section><h3>Assets and relative strength</h3><div id="assetMatrix" class="marketRows"></div><p style="font-size:11px">Optional data/context/*.csv files expand the universe. Unavailable assets remain unavailable; no synthetic quotes or forward fills.</p></section></div>
 </div></section>
-<div class="foot">RESEARCH ONLY • v0.6.1 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
+<div class="foot">RESEARCH ONLY • v0.6.2 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
 </main>
 <script>
 'use strict';
 const $=(id)=>document.getElementById(id);
-const app={symbol:'SPY',dates:[],idx:0,frame:null,info:null,window:80,timeframe:'1d',bar:null,timer:null,request:0,profileTicket:0,hoverIndex:null};
+const app={symbol:'SPY',dates:[],idx:0,frame:null,info:null,window:80,timeframe:'1d',bar:null,timer:null,request:0,profileTicket:0,hoverIndex:null,notesLoadedFor:null,playing:false,playToken:0};
 // Canvas uses the same palette tokens as CSS. No remote theme dependency.
 const themeStyle=getComputedStyle(document.documentElement);
 const cssColor=(name)=>themeStyle.getPropertyValue(name).trim();
-const palette={plot:cssColor('--plot'),grid:cssColor('--chart-grid'),bear:cssColor('--bear'),bull:cssColor('--bull'),neutralZone:cssColor('--chart-neutral-zone'),belowZone:cssColor('--chart-supported-zone'),valueArea:cssColor('--chart-value-area'),warn:cssColor('--warn'),textMuted:cssColor('--text-muted'),accentFill:'rgba(173,182,190,.09)',bullFill:'rgba(46,212,122,.08)',hover:'rgba(170,179,186,.55)'};
+const palette={plot:cssColor('--plot'),grid:cssColor('--chart-grid'),bear:cssColor('--bear'),bull:cssColor('--bull'),neutralZone:cssColor('--chart-neutral-zone'),belowZone:cssColor('--chart-supported-zone'),valueArea:cssColor('--chart-value-area'),warn:cssColor('--warn'),textMuted:cssColor('--text-muted'),accentFill:'rgba(169,185,172,.09)',bullFill:'rgba(34,219,88,.08)',hover:'rgba(175,189,177,.55)'};
 const money=(n)=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmt=(n)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
 const err=(message)=>{const x=$('error');x.textContent=message;x.style.display='block';};
@@ -469,7 +552,11 @@ async function selectSymbol(sym){stop();app.symbol=sym;app.request++;setTimefram
 async function loadDates(keepDate){const sym=app.symbol,tf=app.timeframe,old=keepDate?app.dates[app.idx]:null;const ticket=++app.request;try{const d=await api(`/api/dates?symbol=${encodeURIComponent(sym)}&timeframe=${tf}`);if(ticket!==app.request||sym!==app.symbol||tf!==app.timeframe)return;app.dates=d.dates;app.idx=old&&d.dates.includes(old)?d.dates.indexOf(old):d.dates.length-1;app.bar=tf==='1d'?null:0;$('sessionSlider').max=String(Math.max(0,app.idx,d.dates.length-1));await show();}catch(e){if(ticket===app.request)err(e.message);}}
 async function selectTimeframe(tf){if(!availableTimeframes(app.symbol).includes(tf)){err(`${tf} not available; import ${app.symbol} 1-minute bars first.`);$('timeframe').value=app.timeframe;return;}stop();app.timeframe=tf;setTimeframeOptions();await loadDates(true);}
 function barTime(text){return new Date(text).toLocaleString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});}
-async function show(){const token=++app.request;const date=app.dates[app.idx];if(!date)return;clearError();try{const suffix=app.bar===null?'':`&bar=${app.bar}`;const frame=await api(`/api/frame?symbol=${encodeURIComponent(app.symbol)}&date=${date}&window=${app.window}&timeframe=${app.timeframe}${suffix}`);if(token!==app.request)return;app.frame=frame;app.bar=frame.timeframe==='1d'?null:frame.current_bar_index;app.hoverIndex=null;$('hover').style.display='none';$('sessionSlider').value=String(app.idx);$('currentDate').textContent=frame.date;$('lastPrice').textContent=money(frame.candles.at(-1).close);$('lastSymbol').textContent=app.symbol+' '+(app.timeframe==='1d'?'daily close':app.timeframe+' bar close');$('zoneCount').textContent=String(frame.levels.length);$('reactCount').textContent=String(frame.today_reactions.length);$('coverage').textContent=frame.data_ends.slice(0,7);$('asof').textContent=`${app.symbol} · ${frame.date} · ${app.timeframe.toUpperCase()} · daily levels from ${frame.map_asof_date}`;$('journalDate').textContent=`${app.symbol} · ${frame.date} — Notes recorded for this session`;if(frame.timeframe!=='1d'){$('barSlider').max=String(frame.session_bar_count-1);$('barSlider').value=String(frame.current_bar_index);$('barStamp').textContent=`${barTime(frame.current_bar_time)} ET · ${frame.current_bar_index+1}/${frame.session_bar_count}${frame.partial_session?' · partial day':''}`;$('dataTag').textContent=app.info?.data?.find(x=>x.symbol===app.symbol)?.is_synthetic_demo?'Synthetic intraday demo':'Historical intraday RTH OHLCV';}else{$('dataTag').textContent='Historical daily OHLCV';}app.profile=null;renderZones(frame);renderEvents(frame);draw();refreshNotes(token);refreshProfile(token);}catch(e){if(token===app.request)err(e.message);}}
+async function show(){const token=++app.request;const date=app.dates[app.idx];if(!date)return;clearError();try{const suffix=app.bar===null?'':`&bar=${app.bar}`;const url=`/api/frame?symbol=${encodeURIComponent(app.symbol)}&date=${date}&window=${app.window}&timeframe=${app.timeframe}${suffix}`;
+const frame=await replayFrame(url,`${app.symbol}|${date}|${app.timeframe}|${app.window}|${app.bar===null?'day':app.bar}`);if(token!==app.request)return;app.frame=frame;app.bar=frame.timeframe==='1d'?null:frame.current_bar_index;app.hoverIndex=null;$('hover').style.display='none';syncReplayProgress();$('lastPrice').textContent=money(frame.candles.at(-1).close);$('lastSymbol').textContent=app.symbol+' '+(app.timeframe==='1d'?'daily close':app.timeframe+' bar close');$('zoneCount').textContent=String(frame.levels.length);$('reactCount').textContent=String(frame.today_reactions.length);$('coverage').textContent=frame.data_ends.slice(0,7);$('asof').textContent=`${app.symbol} · ${frame.date} · ${app.timeframe.toUpperCase()} · daily levels from ${frame.map_asof_date}`;$('journalDate').textContent=`${app.symbol} · ${frame.date} — Notes recorded for this session`;if(frame.timeframe!=='1d'){syncReplayProgress();$('dataTag').textContent=app.info?.data?.find(x=>x.symbol===app.symbol)?.is_synthetic_demo?'Synthetic intraday demo':'Historical intraday RTH OHLCV';}else{$('dataTag').textContent='Historical daily OHLCV';}app.profile=null;renderZones(frame);renderEvents(frame);draw();
+const noteKey=app.symbol+'|'+frame.date;
+if(app.notesLoadedFor!==noteKey){app.notesLoadedFor=noteKey;refreshNotes(token);}
+refreshProfile(token);}catch(e){if(token===app.request)err(e.message);}}
 function renderZones(frame){const area=$('zones');area.replaceChildren();$('zonesLabel').textContent=frame.levels.length+' zones';const last=frame.candles.at(-1).close;for(const z of [...frame.levels].sort((a,b)=>b.price-a.price)){const outer=el('div','zone');const top=el('div','line');const heading=el('span');const dot=el('span','swatch'+(z.price>last?' above':''));heading.className='zoneTitle';heading.append(dot,document.createTextNode(money(z.price)),el('span','radius',` ± ${money(z.radius).slice(1)}`));top.append(heading,el('span','sub',z.pivot_count+' pivots'));outer.append(top,el('div','zoneSide',z.price>last?'Above selected close':'At or below selected close'),el('div','secondary',`First tracked ${z.first_seen} · zone ID ${z.id}`),el('div','secondary',`Map as of ${z.asof_date}`));area.append(outer);}if(!frame.levels.length)area.append(el('div','noevents','No qualifying historical zones on this date.'));}
 function renderEvents(frame){const area=$('activity');area.replaceChildren();$('reactionsLabel').textContent=frame.today_reactions.length+' records';if(!frame.today_reactions.length){area.append(el('div','noevents','No detected level interactions this session.'));return;}for(const mark of frame.today_reactions){const item=el('div','event',mark.type.replaceAll('_',' '));item.append(el('small',`${mark.zone_id} · ${money(mark.level_price)} · ${mark.side}`));area.append(item);}}
 function renderProfile(p){
@@ -495,12 +582,90 @@ async function refreshProfile(token){
  try{const p=await api('/api/profile?'+params.toString());if(token!==app.request||profileTicket!==app.profileTicket)return;renderProfile(p);}
  catch(e){if(token!==app.request||profileTicket!==app.profileTicket)return;renderProfile({available:false,reason:'Profile unavailable: '+e.message});}
 }
-async function refreshNotes(token){try{const result=await api(`/api/notes?symbol=${app.symbol}&date=${app.dates[app.idx]}`);if(token!==app.request)return;const area=$('notes');area.replaceChildren();if(!result.notes.length){area.append(el('div','noevents','No notes for this session yet.'));return;}for(const n of result.notes){const wrap=el('div','note');const top=el('div','noteTop');const created=el('span','',n.created_at.slice(0,16).replace('T',' ')+' UTC');const del=el('button','','Delete');del.title='Delete note';del.addEventListener('click',async()=>{if(!confirm('Delete this research note?'))return;try{await api('/api/notes/'+n.id,{method:'DELETE',headers:{'Content-Type':'application/json','X-QuantDesk-Local':'1'}});await refreshNotes(app.request);}catch(e){err(e.message);}});top.append(created,del);wrap.append(top,el('div','',n.content));area.append(wrap);}}catch(e){err('Journal: '+e.message);}}
+async function refreshNotes(token){const noteKey=app.symbol+'|'+app.dates[app.idx];try{const result=await api(`/api/notes?symbol=${app.symbol}&date=${app.dates[app.idx]}`);if(app.symbol+'|'+app.dates[app.idx]!==noteKey)return;const area=$('notes');area.replaceChildren();if(!result.notes.length){area.append(el('div','noevents','No notes for this session yet.'));return;}for(const n of result.notes){const wrap=el('div','note');const top=el('div','noteTop');const created=el('span','',n.created_at.slice(0,16).replace('T',' ')+' UTC');const del=el('button','','Delete');del.title='Delete note';del.addEventListener('click',async()=>{if(!confirm('Delete this research note?'))return;try{await api('/api/notes/'+n.id,{method:'DELETE',headers:{'Content-Type':'application/json','X-QuantDesk-Local':'1'}});await refreshNotes(app.request);}catch(e){err(e.message);}});top.append(created,del);wrap.append(top,el('div','',n.content));area.append(wrap);}}catch(e){app.notesLoadedFor=null;err('Journal: '+e.message);}}
 async function saveNote(){const text=$('noteInput').value.trim();if(!text)return;$('saveNote').disabled=true;const sym=app.symbol,date=app.dates[app.idx];try{await api('/api/notes',{method:'POST',headers:{'Content-Type':'application/json','X-QuantDesk-Local':'1'},body:JSON.stringify({symbol:sym,date,content:text})});$('noteInput').value='';$('noteStatus').textContent='Saved to local SQLite';if(sym===app.symbol&&date===app.dates[app.idx])await refreshNotes(app.request);}catch(e){err(e.message);}finally{$('saveNote').disabled=false;}}
-function stop(){if(app.timer!==null){clearInterval(app.timer);app.timer=null;}$('play').textContent='▶ Play';}
-function go(n){const k=Math.max(0,Math.min(app.dates.length-1,n));if(k===app.idx)return;app.idx=k;app.bar=app.timeframe==='1d'?null:0;show();}
-function goBar(n){if(app.timeframe==='1d'||!app.frame)return;const k=Math.max(0,Math.min(app.frame.session_bar_count-1,n));if(k===app.bar)return;app.bar=k;show();}
-function play(){if(app.timer!==null){stop();return;}if(app.timeframe==='1d'&&app.idx>=app.dates.length-1)app.idx=0;if(app.timeframe!=='1d'&&app.frame&&app.bar>=app.frame.session_bar_count-1)app.bar=0;show();$('play').textContent='⏸ Pause';app.timer=setInterval(()=>{if(app.timeframe!=='1d'&&app.frame){if(app.bar+1<app.frame.session_bar_count){goBar(app.bar+1);return;}if(app.idx+1<app.dates.length){go(app.idx+1);return;}stop();return;}if(app.idx>=app.dates.length-1){stop();return;}go(app.idx+1);},360);}
+
+// The replay stays causal: each requested frame is a point-in-time API response.
+// Revisit cache is bounded; this viewer NEVER preloads future bars.
+const replayCache=new Map(), replayCacheLimit=22;
+let seekTimer=null, seekRaf=null;
+const replayDelay=()=>Math.max(145,Math.round(820/Number($('playSpeed').value||1)));
+function putReplayCache(key,value){if(replayCache.has(key))replayCache.delete(key);replayCache.set(key,value);if(replayCache.size>replayCacheLimit)replayCache.delete(replayCache.keys().next().value);}
+async function replayFrame(url,key){if(replayCache.has(key))return replayCache.get(key);const frame=await api(url);putReplayCache(key,frame);return frame;}
+function syncRange(id,n,max){const slider=$(id);max=Math.max(0,Number(max)||0);n=Math.max(0,Math.min(max,Number(n)||0));slider.max=String(max);slider.value=String(n);slider.style.setProperty('--filled',(max?100*n/max:0).toFixed(3)+'%');slider.setAttribute('aria-valuetext',id==='sessionSlider'?((app.dates[n]||'No session')+', '+(n+1)+' of '+app.dates.length):('Bar '+(n+1)+' of '+(max+1)));}
+function selectedBarTime(index){if(index===app.frame?.current_bar_index)return barTime(app.frame.current_bar_time)+' ET';return 'bar '+(index+1);}
+function syncReplayProgress(){
+ syncRange('sessionSlider',app.idx,app.dates.length-1);
+ $('currentDate').textContent=app.dates[app.idx]||'—';
+ $('sessionProgress').textContent=app.dates.length?`${app.idx+1} / ${app.dates.length} sessions`:'No sessions';
+ if(app.timeframe!=='1d'){
+  const max=Math.max(0,(app.frame?.session_bar_count||1)-1),index=app.bar??0;
+  syncRange('barSlider',index,max);
+  $('barProgress').textContent=`${index+1} / ${max+1} bars`;
+  $('barStamp').textContent=selectedBarTime(index);
+ }
+}
+function showScrubTip(id,event){
+ const slider=$(id),tip=$(id==='sessionSlider'?'sessionScrubTip':'barScrubTip');
+ const min=Number(slider.min||0),max=Number(slider.max||0);
+ const r=slider.getBoundingClientRect();
+ let ratio= max>min ? (Number(slider.value)-min)/(max-min):0;
+ if(event&&event.clientX!==undefined&&r.width>0)ratio=Math.max(0,Math.min(1,(event.clientX-r.left)/r.width));
+ const index=Math.round(min+ratio*(max-min));
+ tip.textContent=id==='sessionSlider' ? `${app.dates[index]||'—'} · ${index+1}/${app.dates.length} sessions`:
+  `${app.dates[app.idx]||'—'} · bar ${index+1}/${max+1}${index===app.frame?.current_bar_index?' · '+barTime(app.frame.current_bar_time)+' ET':''}`;
+ tip.style.left=`clamp(64px, ${Math.max(0,Math.min(100,ratio*100)).toFixed(2)}%, calc(100% - 64px))`;
+ tip.hidden=false;
+}
+function hideScrubTip(id){const slider=$(id);if(document.activeElement!==slider)$(id==='sessionSlider'?'sessionScrubTip':'barScrubTip').hidden=true;}
+function stop(){
+ app.playing=false;app.playToken=(app.playToken||0)+1;
+ if(app.timer!==null){clearTimeout(app.timer);app.timer=null;}
+ $('play').textContent='▶ Play';$('play').setAttribute('aria-pressed','false');
+}
+function cancelQueuedSeek(){if(seekTimer!==null){clearTimeout(seekTimer);seekTimer=null;}if(seekRaf!==null){cancelAnimationFrame(seekRaf);seekRaf=null;}}
+// Coalesce rapid pointer moves: visible labels update on every input,
+// but the backend receives at most one current-position request per ~85ms.
+function queueSeek(immediate=false){
+ app.request++; app.profileTicket++; // immediately invalidate in-flight results
+ if(immediate){cancelQueuedSeek();return show();}
+ if(seekTimer===null)seekTimer=setTimeout(()=>{seekTimer=null;show();},85);
+ return Promise.resolve();
+}
+function go(n,options={}){
+ const k=Math.max(0,Math.min(app.dates.length-1,n));if(k===app.idx)return Promise.resolve();
+ app.idx=k;app.bar=app.timeframe==='1d'?null:0;
+ // No old-session profile or candle data may be shown as the new selection.
+ app.frame=null;app.profile=null;syncReplayProgress();
+ return options.scrub?queueSeek(!!options.final):queueSeek(true);
+}
+function goBar(n,options={}){
+ if(app.timeframe==='1d'||!app.frame)return Promise.resolve();
+ const k=Math.max(0,Math.min(app.frame.session_bar_count-1,n));if(k===app.bar)return Promise.resolve();
+ app.bar=k;syncReplayProgress();
+ return options.scrub?queueSeek(!!options.final):queueSeek(true);
+}
+function play(){
+ if(app.playing){stop();return;}
+ cancelQueuedSeek();
+ if(app.timeframe==='1d'&&app.idx>=app.dates.length-1){app.idx=0;show();}
+ else if(app.timeframe!=='1d'&&app.frame&&app.bar>=app.frame.session_bar_count-1){app.bar=0;show();}
+ app.playing=true;const token=++app.playToken;
+ $('play').textContent='⏸ Pause';$('play').setAttribute('aria-pressed','true');
+ async function tick(){
+  if(!app.playing||token!==app.playToken||workspace!=='replay')return;
+  try{
+   if(app.timeframe!=='1d'&&app.frame){
+    if(app.bar+1<app.frame.session_bar_count)await goBar(app.bar+1);
+    else if(app.idx+1<app.dates.length)await go(app.idx+1);
+    else {stop();return;}
+   }else if(app.idx+1<app.dates.length)await go(app.idx+1);
+   else {stop();return;}
+  }catch(e){err('Replay paused: '+e.message);stop();return;}
+  if(app.playing&&token===app.playToken)app.timer=setTimeout(tick,replayDelay());
+ }
+ app.timer=setTimeout(tick,replayDelay());
+}
 function draw(){const frame=app.frame;if(!frame)return;const cvs=$('chart');const box=cvs.getBoundingClientRect(),dpi=Math.max(1,Math.min(window.devicePixelRatio||1,2));if(box.width<=0||box.height<=0)return;cvs.width=Math.round(box.width*dpi);cvs.height=Math.round(box.height*dpi);const c=cvs.getContext('2d');c.setTransform(dpi,0,0,dpi,0,0);const W=box.width,H=box.height;const bars=frame.candles;const xLeft=57,xRight=W-63,top=24,bot=H-90,volumeTop=H-73,volumeBot=H-25;const width=xRight-xLeft,height=bot-top;const lows=bars.map(b=>b.low),highs=bars.map(b=>b.high);const lo=Math.min(...lows),hi=Math.max(...highs),padding=Math.max((hi-lo)*.10,.5);const min=lo-padding,max=hi+padding;const y=(p)=>bot-(p-min)/(max-min)*height;const cw=width/bars.length;const cx=(i)=>xLeft+(i+.5)*cw;const down=palette.bear,up=palette.bull,txt=palette.textMuted;c.clearRect(0,0,W,H);c.fillStyle=palette.plot;c.fillRect(0,0,W,H);
 // Horizontal grid and right-aligned prices.
 c.font='11px Segoe UI,Arial';c.textAlign='left';for(let k=0;k<6;k++){const p=min+(max-min)*k/5,yy=y(p);c.strokeStyle=palette.grid;c.lineWidth=1;c.beginPath();c.moveTo(xLeft,yy);c.lineTo(xRight,yy);c.stroke();c.fillStyle=txt;c.fillText(p.toFixed(2),xRight+8,yy+4);}
@@ -612,5 +777,54 @@ $('researchRefresh').onclick=showIntelligence;
 $('researchUseReplay').onclick=()=>{$('researchDate').value=app.dates[app.idx]||'';showIntelligence();};
 
 async function start(){try{const status=await api('/api/status');if(status.orders_enabled||status.broker_connected)throw Error('Unexpected trading-enabled server');app.info=status;$('modeBadge').textContent=status.data?.some(d=>d.is_synthetic_demo)?'SYNTHETIC DEMO':'HISTORICAL DATA';await selectSymbol('SPY');}catch(e){err('Failed to connect to local QuantDesk research server: '+e.message);}}
-$('symSPY').onclick=()=>selectSymbol('SPY');$('symQQQ').onclick=()=>selectSymbol('QQQ');$('timeframe').onchange=e=>selectTimeframe(e.target.value);$('window').onchange=(e)=>{app.window=Number(e.target.value);show();};$('prev').onclick=()=>{stop();go(app.idx-1);};$('next').onclick=()=>{stop();go(app.idx+1);};$('latest').onclick=()=>{stop();go(app.dates.length-1);};$('play').onclick=play;$('sessionSlider').oninput=(e)=>{stop();go(Number(e.target.value));};$('barPrev').onclick=()=>{stop();goBar(app.bar-1);};$('barNext').onclick=()=>{stop();goBar(app.bar+1);};$('barLast').onclick=()=>{stop();goBar(app.frame?.session_bar_count-1);};$('barSlider').oninput=e=>{stop();goBar(Number(e.target.value));};$('saveNote').onclick=saveNote;$('priceBin').onchange=()=>{if(app.frame)refreshProfile(app.request);};window.addEventListener('keydown',e=>{if(workspace!=='replay'||e.target.matches('input,textarea,select'))return;if(e.key==='ArrowLeft'){stop();if(app.timeframe==='1d')go(app.idx-1);else goBar(app.bar-1);}if(e.key==='ArrowRight'){stop();if(app.timeframe==='1d')go(app.idx+1);else goBar(app.bar+1);}});$('chart').addEventListener('mousemove',hover);$('chart').addEventListener('mouseleave',()=>{app.hoverIndex=null;$('hover').style.display='none';draw();});window.addEventListener('resize',()=>draw());start();
+$('symSPY').onclick=()=>{cancelQueuedSeek();selectSymbol('SPY');};
+$('symQQQ').onclick=()=>{cancelQueuedSeek();selectSymbol('QQQ');};
+$('timeframe').onchange=e=>{cancelQueuedSeek();selectTimeframe(e.target.value);};
+$('window').onchange=e=>{stop();cancelQueuedSeek();app.window=Number(e.target.value);show();};
+$('firstDate').onclick=()=>{stop();cancelQueuedSeek();go(0);};
+$('prev').onclick=()=>{stop();cancelQueuedSeek();go(app.idx-1);};
+$('next').onclick=()=>{stop();cancelQueuedSeek();go(app.idx+1);};
+$('latest').onclick=()=>{stop();cancelQueuedSeek();go(app.dates.length-1);};
+$('play').onclick=play;
+$('play').setAttribute('aria-pressed','false');
+$('playSpeed').onchange=()=>{if(app.playing){stop();play();}};
+$('barFirst').onclick=()=>{stop();cancelQueuedSeek();goBar(0);};
+$('barBack5').onclick=()=>{stop();cancelQueuedSeek();goBar(app.bar-5);};
+$('barPrev').onclick=()=>{stop();cancelQueuedSeek();goBar(app.bar-1);};
+$('barNext').onclick=()=>{stop();cancelQueuedSeek();goBar(app.bar+1);};
+$('barForward5').onclick=()=>{stop();cancelQueuedSeek();goBar(app.bar+5);};
+$('barLast').onclick=()=>{stop();cancelQueuedSeek();goBar(app.frame?.session_bar_count-1);};
+for(const [id,which] of [['sessionSlider','session'],['barSlider','bar']]){
+ const slider=$(id);
+ slider.addEventListener('input',e=>{stop();if(which==='session')go(Number(e.target.value),{scrub:true});else goBar(Number(e.target.value),{scrub:true});showScrubTip(id);});
+ slider.addEventListener('change',e=>{if(which==='session')go(Number(e.target.value),{scrub:true,final:true});else goBar(Number(e.target.value),{scrub:true,final:true});if(seekTimer!==null)queueSeek(true);showScrubTip(id);});
+ slider.addEventListener('pointermove',e=>showScrubTip(id,e));
+ slider.addEventListener('pointerenter',e=>showScrubTip(id,e));
+ slider.addEventListener('pointerleave',()=>hideScrubTip(id));
+ slider.addEventListener('focus',()=>showScrubTip(id));
+ slider.addEventListener('blur',()=>{ $(id==='sessionSlider'?'sessionScrubTip':'barScrubTip').hidden=true; });
+}
+$('saveNote').onclick=saveNote;
+$('priceBin').onchange=()=>{if(app.frame)refreshProfile(app.request);};
+window.addEventListener('keydown',e=>{
+ if(workspace!=='replay'||e.altKey||e.ctrlKey||e.metaKey)return;
+ const target=e.target;
+ if(target?.closest?.('textarea,select,input:not([type="range"]),[contenteditable="true"]'))return;
+ // Keep native Space activation on focused buttons to avoid double triggering.
+ if(e.code==='Space'||e.key===' '){if(target?.closest?.('button'))return;e.preventDefault();play();return;}
+ const focusedSession=target===$('sessionSlider'),focusedBar=target===$('barSlider');
+ const bySession=focusedSession||(app.timeframe==='1d'&&!focusedBar);
+ let action=null;
+ if(e.key==='ArrowLeft')action=()=>bySession?go(app.idx-(e.shiftKey?5:1)):goBar(app.bar-(e.shiftKey?5:1));
+ else if(e.key==='ArrowRight')action=()=>bySession?go(app.idx+(e.shiftKey?5:1)):goBar(app.bar+(e.shiftKey?5:1));
+ else if(e.key==='ArrowUp')action=()=>go(app.idx-1);
+ else if(e.key==='ArrowDown')action=()=>go(app.idx+1);
+ else if(e.key==='Home')action=()=>e.shiftKey?go(0):(bySession?go(0):goBar(0));
+ else if(e.key==='End')action=()=>e.shiftKey?go(app.dates.length-1):(bySession?go(app.dates.length-1):goBar(app.frame?.session_bar_count-1));
+ if(action){e.preventDefault();stop();cancelQueuedSeek();action();}
+});
+$('chart').addEventListener('mousemove',hover);
+$('chart').addEventListener('mouseleave',()=>{app.hoverIndex=null;$('hover').style.display='none';draw();});
+window.addEventListener('resize',()=>{if(workspace==='replay')draw();});
+start();
 </script></body></html>

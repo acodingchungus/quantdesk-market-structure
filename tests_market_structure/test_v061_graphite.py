@@ -1,19 +1,19 @@
-"""Regression protection for the v0.6.1 Graphite Terminal cosmetic patch."""
+"""Regression protection for the v0.6.1 Midnight Graphite polish patch."""
 import re
 import unittest
 from pathlib import Path
 
 HTML = (Path(__file__).resolve().parents[1]/'market_structure_lab/assets/workstation.html')
 
-class GraphiteTerminalTests(unittest.TestCase):
+class MidnightGraphiteTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.page=HTML.read_text(encoding='utf-8')
 
     def test_palette_contract(self):
-        for token in ('--surface-app: #08090B','--surface-shell: #101317','--surface-panel: #15191E',
-                      '--ink-primary: #F5F7F8','--positive: #2ED47A','--negative: #FF5A5F',
-                      '--caution: #F5C451','--chart-neutral-zone: #ADB6BE','--chart-value-area: #78838E'):
+        for token in ('--surface-app: #030504','--surface-shell: #080A09','--surface-panel: #101310',
+                      '--ink-primary: #F7FAF7','--positive: #22DB58','--negative: #FF5A5F',
+                      '--caution: #F5C451','--chart-neutral-zone: #A9B9AC','--chart-value-area: #9EAEA0'):
             self.assertIn(token,self.page)
         for old in ('#5BA8F5','#0E1827','#060A11','#477D8B'):
             self.assertNotIn(old,self.page)
