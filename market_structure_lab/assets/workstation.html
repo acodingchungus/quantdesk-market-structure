@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QuantDesk v0.6.2 · Midnight Graphite</title>
+<title>QuantDesk v0.7 · Midnight Graphite Research</title>
 <style>
 /* QuantDesk v0.6.2 — Midnight Graphite. Self-contained CSS and JS; no remote assets. */
 :root {
@@ -461,6 +461,26 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
  .keyHints {padding:8px 10px 10px;font-size:10px;}
  .timelineHeader {gap:6px;}
 }
+
+/* v0.7 retrospective study, using Midnight Graphite tokens. */
+.experimentPanel{margin-top:22px;padding:16px;background:var(--surface-inset);border:1px solid var(--stroke-base);border-radius:var(--radius-lg)}
+.experimentHead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.experimentHead h3{margin:0 0 4px;font-size:16px}
+.experimentFilters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.experimentFilters label{font-size:12px;color:var(--ink-secondary)}
+.experimentFilters select,.experimentFilters button{min-height:36px}
+.experimentNotice{padding:10px 12px;border-left:3px solid var(--caution);background:var(--caution-surface);color:var(--ink-secondary);font-size:12px;margin-bottom:12px}
+.experimentStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 12px}
+.experimentStats .statMini{padding:11px;border:1px solid var(--stroke-subtle);background:var(--surface-panel);border-radius:var(--radius-md)}
+.experimentStats .statMini span{display:block;color:var(--ink-muted);font-size:11px}
+.experimentStats .statMini strong{font-size:16px;color:var(--ink-primary)}
+.experimentTableWrap{width:100%;max-width:100%;overflow-x:auto}
+.experimentTable{border-collapse:collapse;min-width:650px;width:100%;font-size:12px}
+.experimentTable th{text-align:left;color:var(--ink-muted);font-weight:600;padding:9px;border-bottom:1px solid var(--stroke-strong)}
+.experimentTable td{padding:10px 9px;border-bottom:1px solid var(--stroke-subtle);color:var(--ink-secondary);white-space:nowrap}
+.experimentTable td.positive{color:var(--positive)}.experimentTable td.negative{color:var(--negative)}
+.experimentFooter{color:var(--ink-muted);font-size:11px;margin-top:10px;overflow-wrap:anywhere}
+@media(max-width:660px){.experimentStats{grid-template-columns:1fr}.experimentPanel{padding:10px}}
 </style></head>
 <body>
 <header><div class="brand"><div class="mark" aria-hidden="true">Q</div><div><h1>QuantDesk <span class="suffix">/ Market Structure Workstation</span></h1><p>Local Python research engine · browser dashboard · SQLite journal</p></div></div><div class="tags"><span class="chip safe"><span class="dot" aria-hidden="true"></span>127.0.0.1 LOCAL</span><span class="chip" id="modeBadge">HISTORICAL DATA</span><span class="chip">NO BROKER / NO ORDERS</span></div></header>
@@ -474,7 +494,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 </nav>
 <section id="replayWorkspace" aria-label="Historical replay">
 <section class="stats"><div class="stat"><small>Selected session closing price</small><strong id="lastPrice">—</strong><span id="lastSymbol">—</span></div><div class="stat"><small>Known daily zones before session open</small><strong id="zoneCount">—</strong><span>Prior-session-only KDE estimates</span></div><div class="stat"><small>Completed-session reactions</small><strong id="reactCount">—</strong><span>Descriptive labels, not trade fills</span></div><div class="stat"><small>Data coverage</small><strong id="coverage">—</strong><span id="dataTag">Historical OHLCV (no live feed)</span></div></section>
-<div class="layout"><section class="panel"><div class="paneHead"><div><h2>Price-reaction replay <span class="version">v0.6.2</span></h2><div id="asof" class="sub">Loading historical SPY/QQQ series…</div></div><div class="group"><div class="symbols"><button id="symSPY" data-symbol="SPY" class="active" aria-pressed="true">SPY</button><button id="symQQQ" data-symbol="QQQ" aria-pressed="false">QQQ</button></div><span id="tfControls"><label class="sub" for="timeframe">Timeframe</label><select id="timeframe"><option value="1d" selected>1D</option><option value="1h">1H</option><option value="15m">15m</option><option value="5m">5m</option><option value="1m">1m</option></select></span><label class="sub" for="window">Window</label><select id="window"><option value="40">40 bars</option><option value="80" selected>80 bars</option><option value="160">160 bars</option></select></div></div>
+<div class="layout"><section class="panel"><div class="paneHead"><div><h2>Price-reaction replay <span class="version">v0.7.0</span></h2><div id="asof" class="sub">Loading historical SPY/QQQ series…</div></div><div class="group"><div class="symbols"><button id="symSPY" data-symbol="SPY" class="active" aria-pressed="true">SPY</button><button id="symQQQ" data-symbol="QQQ" aria-pressed="false">QQQ</button></div><span id="tfControls"><label class="sub" for="timeframe">Timeframe</label><select id="timeframe"><option value="1d" selected>1D</option><option value="1h">1H</option><option value="15m">15m</option><option value="5m">5m</option><option value="1m">1m</option></select></span><label class="sub" for="window">Window</label><select id="window"><option value="40">40 bars</option><option value="80" selected>80 bars</option><option value="160">160 bars</option></select></div></div>
 <div id="dataBanner" class="dataBanner" role="status">Daily replay is available. Import time-stamped 1-minute OHLCV into data/intraday/ for intraday replay.</div>
 <div class="chartWrap"><div class="chartOuter"><canvas id="chart" aria-label="Historical candlestick chart with point-in-time price zones and volume"></canvas><div id="hover" role="tooltip"></div></div></div>
 <div class="chartLegend" aria-label="Chart legend"><span><span class="legendKey"></span>Above selected price</span><span><span class="legendKey support"></span>At/below selected price</span><span><span class="legendKey reaction"></span>Failed breakout marker</span><span><span class="legendKey poc"></span>Executed-tick POC (when available)</span></div>
@@ -517,20 +537,29 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 </section>
 <section id="liveWorkspace" class="workspace" hidden aria-label="Live observation market">
 <div class="workspaceBody panel">
-<div class="workspaceHead"><div><h2>Live market monitor <span class="version">v0.6.2</span></h2><div class="sub">Opt-in, read-only Alpaca stock data · never used as historical backtest input</div></div><span id="liveConnection" class="chip">STREAM DISABLED</span></div>
+<div class="workspaceHead"><div><h2>Live market monitor <span class="version">v0.7.0</span></h2><div class="sub">Opt-in, read-only Alpaca stock data · never used as historical backtest input</div></div><span id="liveConnection" class="chip">STREAM DISABLED</span></div>
 <div id="liveCaution" class="warnLine">Real-time streaming is disabled until you restart the workstation with --enable-live. Historical prices are never presented as live.</div>
 <div class="researchGrid"><section><h3>Stream status</h3><div id="liveStatus" class="marketRows" role="status" aria-live="polite">Loading source and freshness status…</div><p style="font-size:11px">IEX is a single exchange, not consolidated US equity market volume. SIP requires a separate streaming entitlement. No trades or orders can be submitted.</p></section>
 <section><h3>Last observed trade / quote / bar</h3><div id="livePrices" class="marketRows">No live observations received.</div></section></div>
 </div></section>
 <section id="researchWorkspace" class="workspace" hidden aria-label="Historical market intelligence">
 <div class="workspaceBody panel">
-<div class="workspaceHead"><div><h2>Market intelligence <span class="version">v0.6.2</span></h2><div class="sub">Point-in-time daily returns · realized volatility · index correlation · sector relative strength</div></div>
+<div class="workspaceHead"><div><h2>Market intelligence <span class="version">v0.7.0</span></h2><div class="sub">Point-in-time daily returns · realized volatility · index correlation · sector relative strength</div></div>
 <div class="group"><label class="sub" for="researchDate">Research session</label><input id="researchDate" type="date" class="researchDateInput"/><button id="researchRefresh" type="button">Analyze</button><button id="researchUseReplay" type="button">Replay date</button></div></div>
 <div class="warnLine">These indicators use only the LAST COMPLETED daily session before the selected research date. No same-day future closes, intraday VIX, or missing sector prices are invented. They are descriptive statistics, not signals to buy or sell.</div>
 <div id="researchAsOf" class="sub" style="margin-bottom:14px">Loading…</div>
 <div class="researchGrid"><section><h3>Regime diagnostics</h3><div id="regimeMetrics" class="marketRows"></div><h3>20-session comparison</h3><div id="researchComparison" class="marketRows"></div></section><section><h3>Assets and relative strength</h3><div id="assetMatrix" class="marketRows"></div><p style="font-size:11px">Optional data/context/*.csv files expand the universe. Unavailable assets remain unavailable; no synthetic quotes or forward fills.</p></section></div>
-</div></section>
-<div class="foot">RESEARCH ONLY • v0.6.2 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
+</div><div id="experimentPanel" class="experimentPanel" aria-label="Retrospective ETF research experiments">
+<div class="experimentHead"><div><h3>Strategy research · v0.7</h3><div class="sub">Causal daily KDE vs prior-day-extreme baseline · next-session entry · retrospective evaluation</div></div>
+<div class="experimentFilters"><label for="studySymbol">Asset</label><select id="studySymbol"><option value="SPY">SPY</option><option value="QQQ">QQQ</option></select>
+<label for="studyCost">Cost assumption</label><select id="studyCost"><option value="0">0 bps</option><option value="5" selected>5 bps</option><option value="10">10 bps</option><option value="20">20 bps</option></select><button type="button" id="studyRun">Run study</button></div></div>
+<div class="experimentNotice" id="studyWarning">All samples are previously examined. No untouched holdout or validated alpha; not options P&amp;L or an executable backtest.</div>
+<div class="experimentStats" id="studyStats"><div class="statMini"><span>Research engine</span><strong>Ready</strong></div></div>
+<div id="studyTable" class="experimentTableWrap" role="region" aria-label="Strategy research evaluation results" tabindex="0"></div>
+<div class="experimentFooter" id="studyMeta">Runs against the locally supplied daily OHLCV. Does not use or claim audited tick-volume confluence.</div>
+</div>
+</section>
+<div class="foot">RESEARCH ONLY • v0.7.0 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
 </main>
 <script>
 'use strict';
@@ -709,6 +738,7 @@ function setWorkspace(mode){
    $('modeBadge').textContent=app.info?.data?.some(d=>d.is_synthetic_demo)?'SYNTHETIC REGIME DEMO':'HISTORICAL REGIME RESEARCH';
    if(!$('researchDate').value&&app.dates.length)$('researchDate').value=app.dates[app.idx];
    showIntelligence();
+   showStudy();
  }else{
    $('modeBadge').textContent=app.info?.data?.some(d=>d.is_synthetic_demo)?'SYNTHETIC DEMO':'HISTORICAL DATA';
    requestAnimationFrame(draw);
@@ -770,6 +800,44 @@ async function showIntelligence(){
  }
  }catch(e){if(ticket===researchTicket){showEmpty($('regimeMetrics'),'Research unavailable: '+e.message);}}
 }
+// v0.7 retrospective research endpoint is isolated from Live and Replay.
+let studyTicket=0;
+async function showStudy(){
+ const ticket=++studyTicket,button=$('studyRun');button.disabled=true;
+ const sym=$('studySymbol').value,cost=$('studyCost').value;
+ $('studyMeta').textContent='Evaluating completed historical daily observations…';
+ try{
+  const x=await api('/api/experiments?symbol='+encodeURIComponent(sym)+'&cost_bps='+encodeURIComponent(cost));
+  if(ticket!==studyTicket)return;
+  const stats=$('studyStats');stats.replaceChildren();
+  for(const [k,v] of [['Candidate signals',x.candidate_events],['Purged at boundaries',x.purged_boundary_events],['Cost proxy',cost+' bps']]){
+   const box=el('div','statMini');box.append(el('span','',k),el('strong','',String(v)));stats.append(box);
+  }
+  const wrap=$('studyTable');wrap.replaceChildren();
+  const table=document.createElement('table');table.className='experimentTable';
+  const h=document.createElement('thead'),header=document.createElement('tr');
+  for(const name of ['Method','Sample','N','Mean net','Win rate','MFE','MAE','95% month CI','Directional null p']){
+   const th=document.createElement('th');th.textContent=name;header.append(th);
+  }h.append(header);table.append(h);
+  const tb=document.createElement('tbody');
+  for(const r of x.results){
+   const tr=document.createElement('tr');
+   const cells=[r.source==='clustered'?'KDE':'Prior-day H/L',r.sample.replaceAll('_',' '),String(r.trades),
+     r.mean_net_pct===null?'—':(r.mean_net_pct>=0?'+':'')+r.mean_net_pct.toFixed(3)+'%',
+     r.win_rate_pct===null?'—':r.win_rate_pct.toFixed(1)+'%',
+     r.mean_mfe_pct===null?'—':'+'+r.mean_mfe_pct.toFixed(3)+'%',
+     r.mean_mae_pct===null?'—':r.mean_mae_pct.toFixed(3)+'%',
+     r.ci95_low_pct===null?'Insufficient blocks':'['+r.ci95_low_pct.toFixed(3)+', '+r.ci95_high_pct.toFixed(3)+']%',
+     r.random_direction_null_p===null?'—':r.random_direction_null_p.toFixed(3)];
+   cells.forEach((value,i)=>{const td=document.createElement('td');td.textContent=value;
+    if(i===3&&r.mean_net_pct!==null)td.className=r.mean_net_pct>=0?'positive':'negative';tr.append(td);});tb.append(tr);
+  }table.append(tb);wrap.append(table);
+  $('studyWarning').textContent=x.warnings[0]+' '+x.warnings[1];
+  $('studyMeta').textContent='Source '+x.data_start+' → '+x.data_end+' · SHA256 '+(x.source_sha256||'unavailable')+' · fixed daily horizon, next-open entry. MFE/MAE descriptive only; partitions NOT untouched. Direction-randomization null holds dates fixed and does not prove level quality. No audited volume-profile confluence or options fills.';
+ }catch(e){if(ticket===studyTicket){showEmpty($('studyTable'),'Study unavailable: '+e.message);$('studyMeta').textContent='Study request failed; see API status.';}}
+ finally{if(ticket===studyTicket)button.disabled=false;}
+}
+$('studyRun').onclick=showStudy;
 $('tabLive').onclick=()=>setWorkspace('live');
 $('tabReplay').onclick=()=>setWorkspace('replay');
 $('tabResearch').onclick=()=>setWorkspace('research');

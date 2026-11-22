@@ -139,7 +139,7 @@ class WorkstationIntradayTests(unittest.TestCase):
 
     def test_status_advertises_only_loaded_intervals(self):
         status=self.get('/api/status')
-        self.assertEqual(status['version'],'0.6')
+        self.assertEqual(status['version'],'0.7')
         self.assertFalse(status['orders_enabled'])
         self.assertFalse(status['broker_connected'])
         self.assertIn('5m',status['data'][0]['timeframes'])
