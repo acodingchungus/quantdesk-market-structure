@@ -1,6 +1,5 @@
 """v0.4 causality, imported-minute safety, aggregation, API and notebook regression."""
 from pathlib import Path
-from contextlib import closing
 import json
 import tempfile
 import threading
@@ -140,7 +139,7 @@ class WorkstationIntradayTests(unittest.TestCase):
 
     def test_status_advertises_only_loaded_intervals(self):
         status=self.get('/api/status')
-        self.assertEqual(status['version'],'0.4')
+        self.assertEqual(status['version'],'0.5')
         self.assertFalse(status['orders_enabled'])
         self.assertFalse(status['broker_connected'])
         self.assertIn('5m',status['data'][0]['timeframes'])
@@ -176,8 +175,7 @@ class WorkstationIntradayTests(unittest.TestCase):
                     '/api/dates?timeframe=99m']:
             with self.subTest(url=url),self.assertRaises(HTTPError) as ctx:
                 self.get(url)
-            with closing(ctx.exception) as error:
-                self.assertEqual(error.code,400)
+            self.assertEqual(ctx.exception.code,400)
 
 
 if __name__=='__main__':
