@@ -26,6 +26,7 @@ from .replay_model import make_replay
 from .intraday import INTERVALS, load_minutes, aggregate_minutes, coverage, marks_through_bars
 from .volume_profile import load_trades, build_profile, provenance
 from .sip_archive import dest_path, read_meta_verified
+from .experiment_lab import study_events, StudySettings
 from .market_intelligence import MarketIntelligence
 from .live_tape import LiveTape
 import pandas as pd
@@ -65,6 +66,7 @@ class ResearchStore:
         # Avoid keeping months of SIP ticks in RAM. Cache only the last loaded
         # compressed trade session; the archive itself is private and persistent.
         self._archive_tick_cache = OrderedDict()
+        self._study_cache = {}
         self.db_file.parent.mkdir(parents=True, exist_ok=True)
         self._initialize_db()
         self.reload()
@@ -143,6 +145,7 @@ class ResearchStore:
         with self.lock:
             self.datasets = incoming
             self._archive_tick_cache.clear()
+            self._study_cache.clear()
             self.intelligence_engine = intelligence
 
     def _archive_ticks_for_session(self, symbol: str, day: str):
@@ -185,6 +188,18 @@ class ResearchStore:
             # Never use same-day close as evidence at the start of the session.
             return self.intelligence_engine.snapshot(frozen, requested_session=date)
 
+    def experiments(self, symbol='SPY', cost_bps=5.0):
+        """Retrospective daily research: no live events and NO trade execution."""
+        with self.lock:
+            sym = self._symbol(symbol)
+            settings = StudySettings(roundtrip_cost_bps=float(cost_bps))
+            key = (sym, settings.roundtrip_cost_bps)
+            if key not in self._study_cache:
+                ds = self.datasets[sym]
+                self._study_cache[key] = study_events(
+                    ds['bars'], ds['events'], sym, settings, ds['sha256'], self.config.lookback)
+            return self._study_cache[key]
+
     def _symbol(self, symbol):
         sym = (symbol or '').upper()
         if sym not in self.datasets:
@@ -194,7 +209,7 @@ class ResearchStore:
     def status(self):
         with self.lock:
             return {
-                'version': '0.6', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
+                'version': '0.7', 'mode': 'RESEARCH_ONLY', 'network': 'LOOPBACK_ONLY',
                 'broker_connected': False, 'orders_enabled': False, 'live_prices': False,
                 'workspaces': ['live','replay','research'],
                 'context_symbols_loaded': sorted(self.intelligence_engine.hashes),
@@ -393,7 +408,7 @@ class ResearchStore:
 def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
     """Factory supplies testable, isolated handlers for the stdlib server."""
     class Handler(BaseHTTPRequestHandler):
-        server_version = 'QuantDeskLocal/0.6'
+        server_version = 'QuantDeskLocal/0.7'
 
         def log_message(self, fmt, *args):
             # Suppress request logs; journal text and URL query parameters stay private.
@@ -474,6 +489,8 @@ def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
                     self._json(200, store.volume_profile(sym, date, timeframe, bar, query.get('price_bin',['0.05'])[0]))
                 elif info.path == '/api/intelligence':
                     self._json(200, store.intelligence(date))
+                elif info.path == '/api/experiments':
+                    self._json(200, store.experiments(sym, query.get('cost_bps',['5'])[0]))
                 elif info.path == '/api/live':
                     self._json(200, (live or LiveTape()).snapshot())
                 elif info.path == '/api/notes':
@@ -520,7 +537,7 @@ def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QuantDesk v0.6 local research workstation. NO ORDERS.')
+    parser = argparse.ArgumentParser(description='QuantDesk v0.7 local research workstation. NO ORDERS.')
     parser.add_argument('--data-dir', default='data', help='Folder containing SPY.csv and QQQ.csv')
     parser.add_argument('--db', default='outputs/v03_workstation/research_notes.sqlite', help='Local SQLite note journal')
     parser.add_argument('--port', type=int, default=8765)
@@ -540,7 +557,7 @@ def main():
     server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port, live))
     server.daemon_threads = True
     url = f'http://127.0.0.1:{args.port}/'
-    print('\nQuantDesk Market Structure Workstation v0.6')
+    print('\nQuantDesk Market Structure Workstation v0.7')
     print('URL:', url)
     print('Mode: LOCALHOST ONLY | HISTORICAL RESEARCH | NO BROKER | NO ORDERS')
     for entry in store.status()['data']:

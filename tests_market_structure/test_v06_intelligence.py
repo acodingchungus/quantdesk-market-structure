@@ -132,7 +132,7 @@ class ApiTests(unittest.TestCase):
         with urlopen(self.url+'/api/live',timeout=5) as f:b=json.load(f)
         self.assertFalse(b['enabled']);self.assertFalse(b['orders_enabled'])
         with urlopen(self.url+'/api/status',timeout=5) as f:c=json.load(f)
-        self.assertEqual(c['version'],'0.6')
+        self.assertEqual(c['version'],'0.7')
 
     def test_future_session_rejected_and_no_order_route(self):
         for p in ['/api/intelligence?date=2040-01-01','/api/place_order']:
