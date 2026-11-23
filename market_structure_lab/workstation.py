@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from contextlib import closing
 from collections import OrderedDict
+from bisect import bisect_left, bisect_right
 import hashlib
 import json
 import math
@@ -24,7 +25,7 @@ import webbrowser
 from .core import Config, evaluate_symbol, load_bars
 from .replay_model import make_replay
 from .intraday import INTERVALS, load_minutes, aggregate_minutes, coverage, marks_through_bars
-from .volume_profile import load_trades, build_profile, provenance
+from .volume_profile import load_trades, build_profile, provenance, ProfileIndex
 from .sip_archive import dest_path, read_meta_verified
 from .experiment_lab import study_events, StudySettings
 from .market_intelligence import MarketIntelligence
@@ -63,10 +64,17 @@ class ResearchStore:
         self.symbols = tuple(symbols)
         self.datasets = {}
         self.lock = RLock()
+        self._profile_lock = RLock()  # slow tick I/O must not block candle replay
         # Avoid keeping months of SIP ticks in RAM. Cache only the last loaded
         # compressed trade session; the archive itself is private and persistent.
         self._archive_tick_cache = OrderedDict()
         self._study_cache = {}
+        # Bounded, per-session representations: no repeated full-prefix scans
+        # when a user scrubs minute-by-minute in the same trading session.
+        self._session_cache = OrderedDict()
+        # One raw trade session and its pre-binned profile index at most.
+        self._profile_index_cache = OrderedDict()
+        self._profile_response_cache = OrderedDict()
         self.db_file.parent.mkdir(parents=True, exist_ok=True)
         self._initialize_db()
         self.reload()
@@ -101,6 +109,11 @@ class ResearchStore:
                 raise ValueError(f'{sym}: insufficient bars for lookback {self.config.lookback}')
             maps, events = evaluate_symbol(bars, sym, self.config)
             frames, reactions = make_replay(bars, sym, self.config, maps)
+            daily_rows = [{
+                'date': _iso(row.date), 'open': _numeric(row.open),
+                'high': _numeric(row.high), 'low': _numeric(row.low),
+                'close': _numeric(row.close), 'volume': _numeric(row.volume),
+            } for row in bars.itertuples(index=False)]
             dates = [frame['date'] for frame in frames]
             day_index = {d: i for i, d in enumerate(dates)}
             minute_file = self.data_dir / 'intraday' / f'{sym}_1m.csv'
@@ -134,7 +147,7 @@ class ResearchStore:
                 for session, subset in trade_data.groupby('session', sort=True):
                     trades[str(session)] = subset.reset_index(drop=True)
             incoming[sym] = {
-                'bars': bars, 'frames': frames, 'reactions': reactions, 'events': events,
+                'bars': bars, 'daily_rows': daily_rows, 'frames': frames, 'reactions': reactions, 'events': events,
                 'index': day_index, 'dates': dates,
                 'sha256': hashlib.sha256(raw).hexdigest(),
                 'intraday': intraday, 'minute_coverage': minute_coverage,
@@ -144,7 +157,11 @@ class ResearchStore:
         intelligence = MarketIntelligence(self.data_dir, {s: ds['bars'] for s,ds in incoming.items()})
         with self.lock:
             self.datasets = incoming
-            self._archive_tick_cache.clear()
+            with self._profile_lock:
+                self._archive_tick_cache.clear()
+                self._profile_index_cache.clear()
+                self._profile_response_cache.clear()
+            self._session_cache.clear()
             self._study_cache.clear()
             self.intelligence_engine = intelligence
 
@@ -176,6 +193,32 @@ class ResearchStore:
         while len(self._archive_tick_cache) > 1:
             self._archive_tick_cache.popitem(last=False)
         return loaded
+
+    def _prepared_intraday(self, symbol: str, date: str, timeframe: str, day, levels):
+        """Bounded per-session replay index. Marker math is exactly unchanged.
+
+        The full imported session is only an offline source; all returned markers
+        are sliced by bar index, and every marker depends on the current and
+        previous completed bars, never on later price outcomes.
+        """
+        key = (symbol, timeframe, date)
+        if key in self._session_cache:
+            self._session_cache.move_to_end(key)
+            return self._session_cache[key]
+        bars = [{
+            'date': row.timestamp.isoformat(), 'open': _numeric(row.open),
+            'high': _numeric(row.high), 'low': _numeric(row.low),
+            'close': _numeric(row.close), 'volume': _numeric(row.volume),
+            'complete': bool(row.complete), 'minutes_observed': int(row.count),
+        } for row in day.itertuples(index=False)]
+        markers = marks_through_bars(day, levels, symbol)
+        indices = {b['date']: idx for idx, b in enumerate(bars)}
+        marker_bars = [indices[m['date']] for m in markers]
+        prepared = (bars, markers, marker_bars)
+        self._session_cache[key] = prepared
+        while len(self._session_cache) > 12:
+            self._session_cache.popitem(last=False)
+        return prepared
 
     def intelligence(self, date=None):
         """Return market context frozen at the prior completed daily session."""
@@ -253,14 +296,9 @@ class ResearchStore:
             frame = ds['frames'][ds['index'][date]]
             idx = frame['index']
             lo = max(0, idx - window + 1)
-            visible = ds['bars'].iloc[lo:idx+1]
-            bars = [{
-                'date': _iso(row.date),
-                'open': _numeric(row.open), 'high': _numeric(row.high),
-                'low': _numeric(row.low), 'close': _numeric(row.close),
-                'volume': _numeric(row.volume),
-            } for row in visible.itertuples(index=False)]
-            # Markers are only taken from completed frames at/before this replay date.
+            bars = ds['daily_rows'][lo:idx+1]
+            # Frame list indices and their *source-bar* indices are distinct
+            # during the warmup period; filter on source-bar indices exactly.
             marks = [m for earlier in ds['frames']
                      if lo <= earlier['index'] <= idx
                      for m in earlier['markers']]
@@ -298,19 +336,15 @@ class ResearchStore:
             dframe = ds['frames'][ds['index'][date]]
             if any(z['asof_date'] >= date for z in dframe['levels']):
                 raise AssertionError('Intraday frame attempted to read future daily zones')
-            observed = day.iloc[:index+1]
-            prior_marks = marks_through_bars(observed, dframe['levels'], sym)
-            visible_start = visible.iloc[0]['timestamp']
-            marks = [m for m in prior_marks if pd_timestamp(m['date']) >= visible_start]
-            current_time = day.iloc[index]['timestamp'].isoformat()
-            today = [m for m in prior_marks if m['date'] == current_time]
-            rows = [{
-                'date': row.timestamp.isoformat(),
-                'open': _numeric(row.open), 'high': _numeric(row.high),
-                'low': _numeric(row.low), 'close': _numeric(row.close),
-                'volume': _numeric(row.volume), 'complete': bool(row.complete),
-                'minutes_observed': int(row['count']),
-            } for _, row in visible.iterrows()]
+            prepared_bars, all_marks, marker_bars = self._prepared_intraday(
+                sym, date, timeframe, day, dframe['levels'])
+            start_mark = bisect_left(marker_bars, lo)
+            end_mark = bisect_right(marker_bars, index)
+            marks = all_marks[start_mark:end_mark]
+            current_time = prepared_bars[index]['date']
+            today_start = bisect_left(marker_bars, index)
+            today = all_marks[today_start:end_mark]
+            rows = prepared_bars[lo:index+1]
             counts = ds['minute_coverage']['session_counts']
             return {
                 'symbol': sym, 'date': date, 'map_asof_date': dframe['map_asof_date'],
@@ -325,10 +359,11 @@ class ResearchStore:
             }
 
     def volume_profile(self, symbol, date=None, timeframe='1d', bar=None, price_bin='0.05'):
-        """Point-in-time trade-derived session profile, never a candle estimate.
+        """Exact indexed SIP volume profile, independent of replay frame locking.
 
-        Daily selected dates are finished sessions; intraday cutoff is the end
-        of the requested completed bar, not the clock at which API is called.
+        Only immutable loaded trade sessions are analyzed; no estimates from
+        candles, no future prints, no interpolated market values. Caching is
+        bounded by both session and response count.
         """
         with self.lock:
             sym = self._symbol(symbol)
@@ -350,6 +385,11 @@ class ResearchStore:
                 if not isinstance(index, int) or index < 0 or index >= len(day):
                     raise ValueError('bar must index a completed intraday candle')
                 cutoff = day.iloc[index]['timestamp']
+            # Preserve validation semantics even with a cached result.
+            from .volume_profile import _step
+            _step(price_bin)
+        # Heavy trade-load/binning happens outside the global replay/data lock.
+        with self._profile_lock:
             archive = self._archive_ticks_for_session(sym, date)
             if archive is not None:
                 trades_for_day, source = archive
@@ -359,14 +399,33 @@ class ResearchStore:
                 return {'symbol': sym, 'date': date, 'timeframe': timeframe,
                         'available': False, 'reason': 'No executed trades file for this historical date; OHLCV is not volume-at-price',
                         'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(ds['trade_source'] and ds['trade_source'].get('is_synthetic_demo'))}
-            result = build_profile(trades_for_day, asof=cutoff, price_bin=price_bin)
-            result.update({'symbol': sym, 'date': date, 'timeframe': timeframe,
-                           'asof_cutoff': cutoff.isoformat(),
-                           'source_sha256': source['sha256'],
-                           'source_feed': source.get('feed', 'UNKNOWN'),
-                           'trade_conditions_audited': source.get('conditions_audited', False),
-                           'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(source.get('is_synthetic_demo'))})
-            return result
+            source_hash = source['sha256']
+            # The cutoff timestamp, not the button/timeframe, determines exactly
+            # which prints are eligible for the profile.
+            key = (sym, date, cutoff.value, price_bin, source_hash)
+            if key in self._profile_response_cache:
+                self._profile_response_cache.move_to_end(key)
+                result = self._profile_response_cache[key]
+            else:
+                ix_key = (sym, date, source_hash)
+                if ix_key not in self._profile_index_cache:
+                    self._profile_index_cache[ix_key] = ProfileIndex(trades_for_day)
+                    while len(self._profile_index_cache) > 1:
+                        self._profile_index_cache.popitem(last=False)
+                result = self._profile_index_cache[ix_key].evaluate(
+                    asof=cutoff, price_bin=price_bin)
+                self._profile_response_cache[key] = result
+                while len(self._profile_response_cache) > 16:
+                    self._profile_response_cache.popitem(last=False)
+            # Clone the envelope, leaving shared cached math results immutable.
+            response = dict(result)
+        response.update({'symbol': sym, 'date': date, 'timeframe': timeframe,
+                         'asof_cutoff': cutoff.isoformat(),
+                         'source_sha256': source_hash,
+                         'source_feed': source.get('feed', 'UNKNOWN'),
+                         'trade_conditions_audited': source.get('conditions_audited', False),
+                         'is_synthetic_demo': self.data_dir.name=='data_demo' or bool(source.get('is_synthetic_demo'))})
+        return response
 
     def note_list(self, symbol, date=None):
         sym = self._symbol(symbol)
@@ -428,7 +487,12 @@ def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
             self.send_header('Referrer-Policy', 'no-referrer')
             self.send_header('Content-Security-Policy', "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                # A browser that moved to a newer replay frame can cancel this
+                # obsolete response. Never spam tracebacks or block later seeks.
+                pass
 
         def _json(self, status, obj):
             self._send(status, json.dumps(obj, separators=(',', ':'), allow_nan=False).encode('utf-8'))

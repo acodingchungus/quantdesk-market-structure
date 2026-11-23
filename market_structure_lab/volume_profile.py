@@ -112,6 +112,16 @@ def build_profile(trades: pd.DataFrame, *, asof: pd.Timestamp | str | None = Non
                                for p in price_texts), dtype=np.int64, count=len(trades))
     except (InvalidOperation, ValueError) as exc:
         raise ValueError('Invalid price for volume binning') from exc
+    return _profile_from_exact_bins(
+        prices, sizes, bin_ids, session=str(trades['session'].iloc[-1]),
+        last_timestamp=trades['timestamp'].iloc[-1], price_bin=price_bin,
+        step=step, value_area=value_area)
+
+
+def _profile_from_exact_bins(prices: np.ndarray, sizes: np.ndarray, bin_ids: np.ndarray,
+                             *, session: str, last_timestamp: pd.Timestamp,
+                             price_bin: str, step: Decimal, value_area: float) -> dict:
+    """Shared accounting for ordinary and indexed profiles; never approximate prices."""
     bottom, top = int(bin_ids.min()), int(bin_ids.max())
     count = top-bottom+1
     if count > MAX_BINS:
@@ -133,7 +143,7 @@ def build_profile(trades: pd.DataFrame, *, asof: pd.Timestamp | str | None = Non
     # Only local extrema of observed/nonzero bins; no unearned 'liquidity' claims.
     hvn = {k for k in range(1, count-1) if vol[k] >= vol[k-1] and vol[k] > vol[k+1] and vol[k] >= .5*maxvol}
     lvn = {k for k in range(1, count-1) if vol[k] > 0 and vol[k] < vol[k-1] and vol[k] <= vol[k+1] and vol[k] <= .35*maxvol}
-    asof_stamp = trades['timestamp'].iloc[-1].isoformat()
+    asof_stamp = last_timestamp.isoformat()
     bins = [{'low': round(float(Decimal(bottom+k)*step), 6),
              'high': round(float(Decimal(bottom+k+1)*step), 6),
              'volume': int(round(v)),
@@ -143,9 +153,9 @@ def build_profile(trades: pd.DataFrame, *, asof: pd.Timestamp | str | None = Non
             for k, v in enumerate(vol)]
     return {
         'available': True, 'kind': 'EXECUTED_TRADES_VOLUME_AT_PRICE',
-        'session': str(trades['session'].iloc[-1]),
+        'session': str(session),
         'price_bin': price_bin, 'value_area_target': value_area,
-        'volume_shares': total, 'trade_prints': len(trades),
+        'volume_shares': total, 'trade_prints': len(prices),
         'observed_through': asof_stamp,
         'poc_low': bins[poc]['low'], 'poc_high': bins[poc]['high'],
         'val': bins[left]['low'], 'vah': bins[right]['high'],
@@ -154,6 +164,56 @@ def build_profile(trades: pd.DataFrame, *, asof: pd.Timestamp | str | None = Non
         'bins': bins,
         'disclaimer': 'Executed share volume at price, NOT displayed/resting liquidity, order-book depth, trade aggressor or options fills. HVN/LVN are experimental local-extrema labels.',
     }
+
+
+class ProfileIndex:
+    """Immutable, session-local exact bin cache for repeated historical seeks.
+
+    Price text -> Decimal FLOOR binning happens once per price-bin setting.
+    Every requested historical prefix still uses the *same* profile arithmetic
+    as build_profile. No future trades enter a prefix's aggregate.
+    """
+
+    def __init__(self, trades: pd.DataFrame):
+        if trades.empty or trades['session'].nunique() != 1:
+            raise ValueError('ProfileIndex expects one nonempty trading session')
+        if not trades['timestamp'].is_monotonic_increasing:
+            raise ValueError('ProfileIndex needs sorted trade timestamps')
+        self.session = str(trades['session'].iloc[0])
+        self._timestamps = trades['timestamp'].array.asi8.copy()
+        self._prices = trades['price'].to_numpy(dtype=float, copy=True)
+        self._sizes = trades['size'].to_numpy(dtype=np.int64, copy=True)
+        if 'price_text' in trades:
+            self._price_texts = trades['price_text'].astype(str).to_numpy(copy=True)
+        else:
+            self._price_texts = np.array([str(v) for v in self._prices])
+        self._bins: dict[str, np.ndarray] = {}
+
+    def evaluate(self, *, asof: pd.Timestamp | str | None = None,
+                 price_bin: str = '0.05', value_area: float = .70) -> dict:
+        step = _step(price_bin)
+        if not (isinstance(value_area, (float,int)) and math.isfinite(value_area) and .5 <= value_area <= .9):
+            raise ValueError('value_area must be in [0.50,0.90]')
+        if asof is None:
+            end = len(self._prices)
+        else:
+            cutoff = pd.Timestamp(asof)
+            if cutoff.tzinfo is None:
+                raise ValueError('asof timestamp must have timezone offset')
+            end = int(np.searchsorted(self._timestamps, cutoff.tz_convert('UTC').value, side='right'))
+        if end == 0:
+            return {'available': False, 'reason': 'No executed trade ticks observed at/before this replay point'}
+        if price_bin not in self._bins:
+            try:
+                self._bins[price_bin] = np.fromiter(
+                    (int((Decimal(str(p)) / step).to_integral_value(rounding=ROUND_FLOOR))
+                     for p in self._price_texts), dtype=np.int64, count=len(self._prices))
+            except (InvalidOperation, ValueError) as exc:
+                raise ValueError('Invalid price for volume binning') from exc
+        return _profile_from_exact_bins(
+            self._prices[:end], self._sizes[:end], self._bins[price_bin][:end],
+            session=self.session, last_timestamp=pd.Timestamp(self._timestamps[end-1], tz='UTC'),
+            price_bin=price_bin, step=step, value_area=value_area)
 
 
 def provenance(path: str | Path, trades: pd.DataFrame) -> dict:
