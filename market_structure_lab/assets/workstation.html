@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QuantDesk v0.8.1 · Adaptive Cross-Market</title>
+<title>QuantDesk v0.8.2 · Cross-Asset Signal Research</title>
 <style>
 /* QuantDesk v0.6.2 — Midnight Graphite. Self-contained CSS and JS; no remote assets. */
 :root {
@@ -523,6 +523,25 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   #crossRows,#watchRows{grid-template-columns:minmax(0,1fr)}
   .crossRows .marketRow{padding:10px}
 }
+
+/* v0.8.2: optional daily confluence lab; built from local completed data only. */
+.signalLab{margin-top:16px;border:1px solid var(--stroke-base);border-radius:var(--radius-lg);background:var(--surface-inset);padding:0 14px 13px;min-width:0}
+.signalLab summary{cursor:pointer;padding:12px 2px;font-size:14px;font-weight:700;color:var(--ink-primary)}
+.signalLab summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.signalLab .signalHelp{color:var(--ink-muted);font-size:12px;line-height:1.6;margin-bottom:10px}
+.signalForm{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.signalForm label{font-size:12px;color:var(--ink-muted)}
+.signalForm button{min-height:36px}
+.signalResults{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:8px}
+.signalResult{padding:11px 12px;border:1px solid var(--stroke-base);border-radius:var(--radius-md);background:var(--surface-panel);min-width:0}
+.signalResult strong{font-size:16px;color:var(--ink-primary)}
+.signalResult .sub{overflow-wrap:anywhere}
+.signalTableWrap{max-width:100%;overflow-x:auto;scrollbar-color:var(--stroke-strong) transparent;margin-top:12px}
+.signalTable{border-collapse:collapse;width:100%;min-width:550px;font-size:12px}
+.signalTable th,.signalTable td{padding:9px;text-align:left;border-bottom:1px solid var(--stroke-subtle);white-space:nowrap}
+.signalTable th{color:var(--ink-muted);font-weight:650}
+.signalWarning{color:var(--caution);font-size:12px;margin-top:10px}
+@media(max-width:699px){.signalLab{padding:0 10px 11px}.signalForm{gap:7px}.signalForm button{min-height:42px}}
 </style></head>
 <body>
 <header><div class="brand"><div class="mark" aria-hidden="true">Q</div><div><h1>QuantDesk <span class="suffix">/ Market Structure Workstation</span></h1><p>Local Python research engine · browser dashboard · SQLite journal</p></div></div><div class="tags"><span class="chip safe"><span class="dot" aria-hidden="true"></span>127.0.0.1 LOCAL</span><span class="chip" id="modeBadge">HISTORICAL DATA</span><span class="chip">NO BROKER / NO ORDERS</span></div></header>
@@ -605,7 +624,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 <section id="crossWorkspace" class="workspace" hidden aria-label="Cross-market historical and live watchlists">
 <div class="workspaceBody panel">
-  <div class="workspaceHead"><div><h2>Cross-Market Intelligence <span class="version">v0.8.1</span></h2><div class="sub">Point-in-time historical alignment · independent read-only live watchlist</div></div><span class="chip safe">NO ORDERS</span></div>
+  <div class="workspaceHead"><div><h2>Cross-Market Intelligence <span class="version">v0.8.2</span></h2><div class="sub">Point-in-time historical alignment · independent read-only live watchlist</div></div><span class="chip safe">NO ORDERS</span></div>
   <p class="crossNotice">Historical signals use only completed local candles. Live snapshots are NOT persisted or substituted for missing historical data. No cross-asset trading edge has been established.</p>
   <div class="crossFilters">
     <label for="crossDate">Historical completed date</label><input type="date" id="crossDate" value="2026-09-30" />
@@ -616,6 +635,20 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     <label for="crossOffset">ET offset</label><select id="crossOffset"><option value="-04:00">EDT (UTC−4)</option><option value="-05:00">EST (UTC−5)</option></select>
     <button id="crossRun" type="button" class="primary">Analyze history</button>
   </div>
+  <details class="signalLab" id="signalLab">
+    <summary>Cross-asset KDE confluence research · v0.8.2 (retrospective)</summary>
+    <div class="signalHelp">Directional peer residuals use 20 completed prior daily returns to fit beta/alpha. Signal-day closes are known only after the session; KDE outcomes use the existing next-session-open methodology. This is not a prediction or an untouched holdout.</div>
+    <div class="signalForm">
+      <label for="signalTarget">Target</label><select id="signalTarget"><option>QQQ</option><option>SPY</option></select>
+      <label for="signalDirection">Hypothesis direction</label><select id="signalDirection"><option value="1">Bullish (+1)</option><option value="-1">Bearish (−1)</option></select>
+      <button id="signalInspect" type="button">Inspect selected close</button>
+      <label for="signalCost">Study cost</label><select id="signalCost"><option value="0">0 bps</option><option value="5" selected>5 bps</option><option value="10">10 bps</option><option value="25">25 bps</option></select>
+      <button id="signalEvaluate" type="button" class="primary">Compare KDE events</button>
+    </div>
+    <div class="signalResults" id="signalResults" role="status">Choose Inspect selected close or Compare KDE events.</div>
+    <div id="signalTable" class="signalTableWrap" role="region" aria-label="Cross-market study details" tabindex="0"></div>
+    <div class="signalWarning" id="signalWarning">Historical observations only. Retrospective statistics can reflect selection bias and do not demonstrate a tradable edge.</div>
+  </details>
   <div id="crossLayout" class="crossLayout" style="margin-top:18px">
     <section class="crossPanel"><h3>Aligned cross-asset comparison</h3><div class="sub" id="crossMeta">No forecast or trade recommendation.</div><div id="crossRows" class="marketRows crossRows" role="status">Open Cross-Market to run an as-of comparison.</div></section>
     <section class="crossPanel"><div class="group" style="justify-content:space-between;margin-bottom:9px"><h3>TradingView watchlists</h3><div class="group"><button id="watchFocus" type="button" aria-pressed="false" aria-controls="crossLayout">Focus watchlist</button><button id="watchRefresh" type="button">Refresh snapshots</button></div></div>
@@ -626,7 +659,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   </div>
 </div>
 </section>
-<div class="foot">RESEARCH ONLY • v0.8.1 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
+<div class="foot">RESEARCH ONLY • v0.8.2 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
 </main>
 <script>
 'use strict';
@@ -1004,6 +1037,59 @@ function renderWatchlist(){
   const row=kv(symbol,price,meta);if(item.status==='stale')row.querySelector('.value').classList.add('is-negative');container.append(row);
  }
 }
+// v0.8.2 — optional, daily-only exploratory KDE confluence. No live cache used.
+let signalRequest=0;
+function signalTile(title,value,meta){
+ const box=el('div','signalResult');box.append(el('div','sub',title),el('strong','',value),el('div','sub',meta));return box;
+}
+function renderSignalTable(headers,rows){
+ const region=$('signalTable');region.replaceChildren();
+ if(!rows.length)return;
+ const table=el('table','signalTable');const head=el('thead');const tr=el('tr');
+ for(const h of headers)tr.append(el('th','',h));head.append(tr);table.append(head);
+ const tbody=el('tbody');for(const cells of rows){const row=el('tr');for(const c of cells)row.append(el('td','',String(c)));tbody.append(row);}table.append(tbody);region.append(table);
+}
+function signalNumber(num,suffix=''){return num===null||num===undefined?'unavailable':(Number(num)>=0?'+':'')+Number(num).toFixed(2)+suffix;}
+async function showSignalClose(){
+ const ticket=++signalRequest,btn=$('signalInspect');btn.disabled=true;
+ $('signalResults').replaceChildren(signalTile('Historical signal','Loading…','Completed daily bars only'));
+ $('signalTable').replaceChildren();
+ try{
+  const query=new URLSearchParams({target:$('signalTarget').value,asof:$('crossDate').value,direction:$('signalDirection').value});
+  const data=await api('/api/cross-signal?'+query);if(ticket!==signalRequest||workspace!=='cross')return;
+  $('signalResults').replaceChildren(signalTile('Factor state',data.state.toUpperCase(),`${data.coverage} aligned peers · at completed ${data.asof_completed_session}`),
+   signalTile('Directional residual',signalNumber(data.mean_directional_residual_pp,' pp'),'Observed at close, after prior-window fit'),
+   signalTile('Confirming peer fraction',data.confirming_peer_fraction===null?'unavailable':(data.confirming_peer_fraction*100).toFixed(0)+'%','Not a win probability'));
+  renderSignalTable(['Peer','Beta (prior)','Correlation (prior)','Lead/lag (prior)','Residual (pp)'],data.peers.map(p=>[
+   p.symbol,p.available?Number(p.beta_prior).toFixed(3):'—',p.historical_corr_prior===null||p.historical_corr_prior===undefined?'—':Number(p.historical_corr_prior).toFixed(3),
+   p.lead_lag_corr_prior===null||p.lead_lag_corr_prior===undefined?'—':Number(p.lead_lag_corr_prior).toFixed(3),signalNumber(p.residual_pp,' pp')]));
+  $('signalWarning').textContent=data.warning+(data.reason?' · '+data.reason:'');
+ }catch(e){if(ticket===signalRequest)showEmpty($('signalResults'),'Signal unavailable: '+e.message)}
+ finally{if(ticket===signalRequest)btn.disabled=false}
+}
+async function showSignalStudy(){
+ const ticket=++signalRequest,btn=$('signalEvaluate');btn.disabled=true;
+ $('signalResults').replaceChildren(signalTile('KDE confluence study','Loading…','Retrospective daily events'));
+ $('signalTable').replaceChildren();
+ try{
+  const query=new URLSearchParams({target:$('signalTarget').value,cost_bps:$('signalCost').value});
+  const data=await api('/api/cross-study?'+query);if(ticket!==signalRequest||workspace!=='cross')return;
+  $('signalResults').replaceChildren(signalTile('KDE events',String(data.studied_events),'Existing v0.7 event outcomes, boundary events purged'),
+   signalTile('Peer sources',data.peers.join(', '),'Missing or stale peer data excluded from confirmation'));
+  const rows=[];for(const p of data.comparison){
+   for(const name of ['baseline','confirmed','contradicted','mixed','unavailable']){
+    const item=name==='baseline'?p.baseline:p.groups[name];
+    rows.push([p.partition,name,item.events,item.mean_net_pct===null?'—':signalNumber(item.mean_net_pct,'%'),
+      item.win_rate_pct===null?'—':item.win_rate_pct.toFixed(1)+'%']);
+   }
+  }
+  renderSignalTable(['Partition','Group','Events','Mean net proxy','Win rate'],rows);
+  $('signalWarning').textContent=data.warnings.join(' ');
+ }catch(e){if(ticket===signalRequest)showEmpty($('signalResults'),'Study unavailable: '+e.message)}
+ finally{if(ticket===signalRequest)btn.disabled=false}
+}
+$('signalInspect').onclick=showSignalClose;
+$('signalEvaluate').onclick=showSignalStudy;
 $('tabCross').onclick=()=>setWorkspace('cross');
 $('crossRun').onclick=showCross;
 $('watchRefresh').onclick=showWatchlist;

@@ -31,6 +31,7 @@ from .experiment_lab import study_events, StudySettings
 from .market_intelligence import MarketIntelligence
 from .live_tape import LiveTape
 from .cross_asset_v08 import CrossAssetEngine
+from .cross_signals_v082 import CrossSignalResearch
 from .live_watchlist_v08 import WatchlistMonitor
 from .watchlist_v08 import catalog as watchlist_catalog
 import pandas as pd
@@ -168,6 +169,8 @@ class ResearchStore:
             self._study_cache.clear()
             self.intelligence_engine = intelligence
             self.cross_asset_engine = CrossAssetEngine(self.data_dir, intelligence.data)
+            self.cross_signal_engine = CrossSignalResearch(intelligence.data)
+            self._confluence_cache = {}
 
     def _archive_ticks_for_session(self, symbol: str, day: str):
         """Load one verified SIP trade shard on demand, never future sessions.
@@ -246,6 +249,27 @@ class ResearchStore:
                 self._study_cache[key] = study_events(
                     ds['bars'], ds['events'], sym, settings, ds['sha256'], self.config.lookback)
             return self._study_cache[key]
+
+    def cross_signal(self, symbol='QQQ', asof=None, direction=1):
+        """A close-of-session feature only, never a realized future outcome."""
+        with self.lock:
+            target = self._symbol(symbol)
+            if asof is None:
+                asof = self.datasets[target]['dates'][-1]
+            return self.cross_signal_engine.snapshot(asof=asof, target=target,
+                                                     direction=int(direction))
+
+    def cross_study(self, symbol='QQQ', cost_bps=5.0):
+        """Retrospective KDE-only confluence using validated v0.7 event outcomes."""
+        with self.lock:
+            target = self._symbol(symbol)
+            cost = float(cost_bps)
+            key = (target, cost)
+            if key not in self._confluence_cache:
+                study = self.experiments(target, cost)
+                self._confluence_cache[key] = self.cross_signal_engine.evaluate(
+                    target=target, study=study)
+            return self._confluence_cache[key]
 
     def _symbol(self, symbol):
         sym = (symbol or '').upper()
@@ -578,6 +602,15 @@ def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None, 
                         feed=query.get('feed', ['sip'])[0],
                         window=int(query.get('window', ['20'])[0]))
                     self._json(200, result)
+                elif info.path == '/api/cross-signal':
+                    self._json(200, store.cross_signal(
+                        symbol=query.get('target', ['QQQ'])[0],
+                        asof=query.get('asof', [None])[0],
+                        direction=int(query.get('direction', ['1'])[0])))
+                elif info.path == '/api/cross-study':
+                    self._json(200, store.cross_study(
+                        symbol=query.get('target', ['QQQ'])[0],
+                        cost_bps=float(query.get('cost_bps', ['5'])[0])))
                 elif info.path == '/api/notes':
                     self._json(200, store.note_list(sym, date))
                 else:
@@ -647,7 +680,7 @@ def main():
     server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port, live, watchlist))
     server.daemon_threads = True
     url = f'http://127.0.0.1:{args.port}/'
-    print('\nQuantDesk Market Structure Workstation v0.8.0 (v0.7 KDE/strategy preserved)')
+    print('\nQuantDesk Market Structure Workstation v0.8.2 (v0.7 KDE/strategy preserved)')
     print('URL:', url)
     print('Mode: LOCALHOST ONLY | HISTORICAL RESEARCH | NO BROKER | NO ORDERS')
     for entry in store.status()['data']:
