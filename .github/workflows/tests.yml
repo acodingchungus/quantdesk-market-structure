@@ -21,7 +21,9 @@ jobs:
       - name: Verify repository source imports
         run: |
           python -m compileall -q market_structure_lab
-          python -c "import market_structure_lab.fetch_alpaca_minutes,market_structure_lab.market_intelligence,market_structure_lab.sip_archive,market_structure_lab.experiment_lab"
+          python -c "import market_structure_lab.fetch_alpaca_minutes,market_structure_lab.market_intelligence,market_structure_lab.sip_archive,market_structure_lab.experiment_lab,market_structure_lab.universe,market_structure_lab.universe_backfill"
+      - name: Verify Git-tracked source manifest
+        run: python scripts/check_git_sources.py
       - name: Test
         run: python -m unittest discover -s tests_market_structure -v
       - name: Generate synthetic demo

@@ -23,10 +23,11 @@ from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 from .intraday import load_minutes
+from .universe import ALL_SYMBOLS, CORE
 
 ET = ZoneInfo('America/New_York')
 UTC = ZoneInfo('UTC')
-SYMBOLS = ('SPY', 'QQQ')
+SYMBOLS = ALL_SYMBOLS
 BAR_FIELDS = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
 TRADE_FIELDS = ('timestamp', 'price', 'size', 'venue', 'conditions', 'trade_id', 'source_label')
 URLS = {
@@ -114,7 +115,14 @@ class AlpacaArchiveClient:
             try:
                 with self.opener(req, timeout=45) as response:
                     payload = json.load(response)
-                if not isinstance(payload,dict) or not isinstance(payload.get(kind),list):
+                if not isinstance(payload,dict) or kind not in payload:
+                    raise ValueError('Invalid Alpaca JSON schema')
+                # The single-symbol endpoint can return a null collection when
+                # no bars exist (e.g. exchange holidays). Treat only an explicit,
+                # terminal null as an empty result; never fabricate any data.
+                if payload[kind] is None and payload.get('next_page_token') is None:
+                    payload = {**payload, kind: []}
+                if not isinstance(payload[kind],list):
                     raise ValueError('Invalid Alpaca JSON schema')
                 return payload
             except HTTPError as e:
@@ -352,6 +360,8 @@ def publish_minute_view(root: Path, feed: str, symbol: str,
 
     Never modifies daily CSV or trade archives. Existing intraday CSV backed up.
     """
+    if symbol not in CORE:
+        raise ValueError('Intraday replay is currently enabled for SPY/QQQ only; other symbols remain archive/context research data')
     target=root/'intraday'/f'{symbol}_1m.csv'
     if target.exists() and not replace_active:
         raise FileExistsError(f'{target} exists: pass --replace-active to back it up and rebuild')
