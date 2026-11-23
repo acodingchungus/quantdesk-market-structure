@@ -32,6 +32,10 @@ REQUIRED = [
     'tests_market_structure/test_v08_crossasset_watchlists.py',
     'market_structure_lab/cross_signals_v082.py',
     'tests_market_structure/test_v082_cross_signals.py',
+    'market_structure_lab/data_quality_v083.py',
+    'market_structure_lab/strategy_v083.py',
+    'market_structure_lab/research_pipeline_v083.py',
+    'tests_market_structure/test_v083_research_pipeline.py',
 ]
 
 def main():

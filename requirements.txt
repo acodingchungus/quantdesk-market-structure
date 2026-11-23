@@ -9,3 +9,6 @@ websocket-client>=1.8,<2
 
 # Uses Windows Credential Manager; not installed in Linux CI.
 keyring>=25,<27; platform_system == "Windows"
+
+# Exchange calendar replaces naive weekday-based complete-session assumptions.
+exchange-calendars>=4.5,<5

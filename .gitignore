@@ -12,3 +12,5 @@ data_demo/
 *.sqlite3
 *.sqlite-wal
 *.sqlite-shm
+# User-reviewed v0.8.3 dataset provenance; never publish local paths
+research_manifest_v083.local.json
