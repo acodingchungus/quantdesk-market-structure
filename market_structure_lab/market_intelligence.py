@@ -13,8 +13,7 @@ import numpy as np
 import pandas as pd
 from .core import load_bars
 
-CONTEXT_SYMBOLS = ('IWM', 'SMH', 'XLK', 'XLF', 'XLE', 'XLU', 'XLP',
-                   'NVDA', 'AMD', 'MSFT', 'AAPL', 'META', 'XOM', 'CVX')
+from .universe import CONTEXT_SYMBOLS
 
 
 def _date(s):
