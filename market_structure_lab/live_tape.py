@@ -13,7 +13,8 @@ import os
 import threading
 from typing import Any
 
-ALLOWED = frozenset({'SPY','QQQ','IWM','SMH','XLK','XLF','XLE','XLU','XLP','NVDA','AMD','MSFT','AAPL','META','XOM','CVX'})
+from .watchlist_v08 import EQUITIES
+ALLOWED = frozenset(EQUITIES)
 
 
 def _utc(text):
@@ -33,7 +34,7 @@ def _positive(value):
 class LiveTape:
     def __init__(self, symbols=('SPY','QQQ'), feed='iex'):
         self.symbols = tuple(dict.fromkeys(symbols))
-        if not self.symbols or len(self.symbols) > 16 or any(s not in ALLOWED for s in self.symbols):
+        if not self.symbols or len(self.symbols) > 30 or any(s not in ALLOWED for s in self.symbols):
             raise ValueError('Unrecognized or excessive live symbols')
         if feed not in {'iex','sip'}:
             raise ValueError('Live feed must be iex or sip')

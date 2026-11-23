@@ -5,6 +5,7 @@ are currently enabled for KDE replay and v0.7 strategy research. Daily context
 CSV imports are descriptive, point-in-time features (not trading signals).
 """
 from __future__ import annotations
+from .watchlist_v08 import EQUITIES as TRADINGVIEW_EQUITIES
 
 CORE = ('SPY', 'QQQ')
 BENCHMARKS = ('IWM', 'SMH')
@@ -20,11 +21,12 @@ GROUPS = {
     'mag7': MEGACAPS,
     'semis': SEMIS,
     'energy': ENERGY,
+    'watchlist': TRADINGVIEW_EQUITIES,
 }
 
 # Preserves existing context symbols then extends rather than removing them.
 CONTEXT_SYMBOLS = tuple(dict.fromkeys(
-    BENCHMARKS + SECTORS + MEGACAPS + SEMIS + ENERGY
+    s for s in BENCHMARKS + SECTORS + MEGACAPS + SEMIS + ENERGY + TRADINGVIEW_EQUITIES if s not in CORE
 ))
 ALL_SYMBOLS = CORE + tuple(s for s in CONTEXT_SYMBOLS if s not in CORE)
 

@@ -101,7 +101,7 @@ def main(argv=None):
     sub=p.add_subparsers(dest='command',required=True)
     for action in ('plan','download-minutes','coverage','download-context','publish-core'):
         q=sub.add_parser(action)
-        q.add_argument('--groups', nargs='+', choices=tuple(GROUPS), default=['core'])
+        q.add_argument('--groups', nargs='+', choices=tuple(GROUPS), default=None)
         q.add_argument('--symbols', nargs='*', default=[])
         q.add_argument('--start',required=True,help='First past ET date (YYYY-MM-DD)')
         q.add_argument('--end',required=True,help='Last past ET date, <=93 calendar days')
@@ -120,7 +120,7 @@ def main(argv=None):
         start=date.fromisoformat(a.start);end=date.fromisoformat(a.end)
         dates=tuple(session_days(start,end))
         if not dates:raise ValueError('Selected range has no weekdays')
-        symbols=select_symbols(a.groups,a.symbols)
+        symbols=select_symbols(a.groups if a.groups is not None else ([] if a.symbols else ['core']),a.symbols)
         root=Path(a.data_dir)
         if a.command in ('plan','coverage'):
             inv=coverage_snapshot(root,a.feed,symbols,start,end)

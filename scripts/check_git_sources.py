@@ -26,6 +26,10 @@ REQUIRED = [
     'tests_market_structure/test_v06_intelligence.py',
     'tests_market_structure/test_v063_sip_archive.py',
     'tests_market_structure/test_v07_experiments.py',
+    'market_structure_lab/watchlist_v08.py',
+    'market_structure_lab/cross_asset_v08.py',
+    'market_structure_lab/live_watchlist_v08.py',
+    'tests_market_structure/test_v08_crossasset_watchlists.py',
 ]
 
 def main():

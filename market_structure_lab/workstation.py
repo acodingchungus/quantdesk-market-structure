@@ -30,6 +30,9 @@ from .sip_archive import dest_path, read_meta_verified
 from .experiment_lab import study_events, StudySettings
 from .market_intelligence import MarketIntelligence
 from .live_tape import LiveTape
+from .cross_asset_v08 import CrossAssetEngine
+from .live_watchlist_v08 import WatchlistMonitor
+from .watchlist_v08 import catalog as watchlist_catalog
 import pandas as pd
 
 
@@ -164,6 +167,7 @@ class ResearchStore:
             self._session_cache.clear()
             self._study_cache.clear()
             self.intelligence_engine = intelligence
+            self.cross_asset_engine = CrossAssetEngine(self.data_dir, intelligence.data)
 
     def _archive_ticks_for_session(self, symbol: str, day: str):
         """Load one verified SIP trade shard on demand, never future sessions.
@@ -464,7 +468,7 @@ class ResearchStore:
             return {'deleted': bool(cursor.rowcount)}
 
 
-def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
+def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None, watchlist: WatchlistMonitor | None = None):
     """Factory supplies testable, isolated handlers for the stdlib server."""
     class Handler(BaseHTTPRequestHandler):
         server_version = 'QuantDeskLocal/0.7'
@@ -557,6 +561,23 @@ def make_handler(store: ResearchStore, port: int, live: LiveTape | None = None):
                     self._json(200, store.experiments(sym, query.get('cost_bps',['5'])[0]))
                 elif info.path == '/api/live':
                     self._json(200, (live or LiveTape()).snapshot())
+                elif info.path == '/api/watchlist':
+                    self._json(200, watchlist_catalog())
+                elif info.path == '/api/live/watchlist':
+                    self._json(200, (watchlist or WatchlistMonitor()).snapshot())
+                elif info.path == '/api/cross-asset':
+                    raw_symbols = query.get('symbols', ['SPY,QQQ,NVDA,SMH'])[0]
+                    requested = tuple(x.strip() for x in raw_symbols.split(','))
+                    if not requested or len(requested)>60 or any(not x for x in requested):
+                        raise ValueError('Invalid cross-asset symbol selection')
+                    result = store.cross_asset_engine.snapshot(
+                        asof=query.get('asof', [date or '2026-09-30'])[0],
+                        target=query.get('target', ['QQQ'])[0],
+                        symbols=requested,
+                        timeframe=query.get('timeframe', ['1d'])[0],
+                        feed=query.get('feed', ['sip'])[0],
+                        window=int(query.get('window', ['20'])[0]))
+                    self._json(200, result)
                 elif info.path == '/api/notes':
                     self._json(200, store.note_list(sym, date))
                 else:
@@ -608,7 +629,9 @@ def main():
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--enable-live', action='store_true', help='Explicitly opt in to read-only Alpaca WebSocket stock data')
     parser.add_argument('--live-feed', choices=['iex','sip'], default='iex', help='SIP requires suitable streaming entitlement')
-    parser.add_argument('--live-symbols', default='SPY,QQQ', help='Comma-separated allowed read-only stream symbols')
+    parser.add_argument('--live-symbols', default='SPY,QQQ', help='Priority read-only WebSocket symbols (maximum 30)')
+    parser.add_argument('--enable-watchlist-poll', action='store_true', help='Explicitly enable bounded read-only Alpaca stock+crypto snapshot polling for the screenshot universe')
+    parser.add_argument('--watchlist-interval', type=int, default=30, help='Watchlist poll interval in seconds (15–600; default 30)')
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('--port must be between 1024 and 65535')
@@ -618,10 +641,13 @@ def main():
     if args.enable_live:
         # Fail before starting the local web server if credentials are missing.
         live.start()
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port, live))
+    watchlist = WatchlistMonitor(feed=args.live_feed, interval=args.watchlist_interval)
+    if args.enable_watchlist_poll:
+        watchlist.start()
+    server = ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(store, args.port, live, watchlist))
     server.daemon_threads = True
     url = f'http://127.0.0.1:{args.port}/'
-    print('\nQuantDesk Market Structure Workstation v0.7')
+    print('\nQuantDesk Market Structure Workstation v0.8.0 (v0.7 KDE/strategy preserved)')
     print('URL:', url)
     print('Mode: LOCALHOST ONLY | HISTORICAL RESEARCH | NO BROKER | NO ORDERS')
     for entry in store.status()['data']:
@@ -639,6 +665,7 @@ def main():
             print(f" {entry['symbol']} trade prints: none; profile panel will say unavailable")
     print('Research notes SQLite:', Path(args.db).resolve())
     print('Live observation feed:', (args.live_feed.upper() if args.enable_live else 'OFF'), '| NO ORDERS')
+    print('Watchlist stock+crypto snapshot polling:', ('ON / '+args.live_feed.upper() if args.enable_watchlist_poll else 'OFF'))
     print('Context symbols:', ', '.join(store.status()['context_symbols_loaded']) or '(none installed)')
     print('Press Ctrl+C to stop the local server.\n', flush=True)
     if not args.no_browser:
@@ -649,6 +676,7 @@ def main():
         print('\nShutting down QuantDesk local server.')
     finally:
         live.stop()
+        watchlist.stop()
         server.server_close()
 
 

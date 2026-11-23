@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QuantDesk v0.7 · Midnight Graphite Research</title>
+<title>QuantDesk v0.8 · Cross-Market Research</title>
 <style>
 /* QuantDesk v0.6.2 — Midnight Graphite. Self-contained CSS and JS; no remote assets. */
 :root {
@@ -481,6 +481,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .experimentTable td.positive{color:var(--positive)}.experimentTable td.negative{color:var(--negative)}
 .experimentFooter{color:var(--ink-muted);font-size:11px;margin-top:10px;overflow-wrap:anywhere}
 @media(max-width:660px){.experimentStats{grid-template-columns:1fr}.experimentPanel{padding:10px}}
+
+/* v0.8: all instruments visible; eligibility clearly distinguished from data. */
+.crossLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:15px}
+.crossFilters{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.crossFilters label{color:var(--ink-muted);font-size:12px}
+.crossNotice{margin:0 0 14px;border-left:3px solid var(--caution);background:var(--caution-surface);padding:10px 12px;color:var(--ink-secondary)}
+.crossRows{display:flex;flex-direction:column;gap:5px;max-height:580px;overflow:auto}
+.crossRows .marketRow{min-height:54px}
+.crossRows .value{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.crossRows .status-small{font-size:11px;color:var(--ink-muted)}
+.crossPanel h3{margin:0 0 10px}
+.crossPanel{min-width:0}
+@media(max-width:950px){.crossLayout{grid-template-columns:1fr}}
 </style></head>
 <body>
 <header><div class="brand"><div class="mark" aria-hidden="true">Q</div><div><h1>QuantDesk <span class="suffix">/ Market Structure Workstation</span></h1><p>Local Python research engine · browser dashboard · SQLite journal</p></div></div><div class="tags"><span class="chip safe"><span class="dot" aria-hidden="true"></span>127.0.0.1 LOCAL</span><span class="chip" id="modeBadge">HISTORICAL DATA</span><span class="chip">NO BROKER / NO ORDERS</span></div></header>
@@ -490,6 +503,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   <button id="tabLive" type="button" aria-pressed="false">● Live Market</button>
   <button id="tabReplay" class="active" type="button" aria-pressed="true">◀ Historical Replay</button>
   <button id="tabResearch" type="button" aria-pressed="false">▦ Research Lab</button>
+  <button id="tabCross" type="button" aria-pressed="false">⌁ Cross-Market</button>
   <span class="workspaceNote">Research only · no execution endpoints</span>
 </nav>
 <section id="replayWorkspace" aria-label="Historical replay">
@@ -559,7 +573,31 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 <div class="experimentFooter" id="studyMeta">Runs against the locally supplied daily OHLCV. Does not use or claim audited tick-volume confluence.</div>
 </div>
 </section>
-<div class="foot">RESEARCH ONLY • v0.7.3 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
+
+<section id="crossWorkspace" class="workspace" hidden aria-label="Cross-market historical and live watchlists">
+<div class="workspaceBody panel">
+  <div class="workspaceHead"><div><h2>Cross-Market Intelligence <span class="version">v0.8.0</span></h2><div class="sub">Point-in-time historical alignment · independent read-only live watchlist</div></div><span class="chip safe">NO ORDERS</span></div>
+  <p class="crossNotice">Historical signals use only completed local candles. Live snapshots are NOT persisted or substituted for missing historical data. No cross-asset trading edge has been established.</p>
+  <div class="crossFilters">
+    <label for="crossDate">Historical completed date</label><input type="date" id="crossDate" value="2026-09-30" />
+    <label for="crossTarget">Target</label><select id="crossTarget"><option value="QQQ">QQQ</option><option value="SPY">SPY</option></select>
+    <label for="crossFrame">Timeframe</label><select id="crossFrame"><option value="1d">Daily</option><option value="1m">1 minute (requires verified local archives)</option></select>
+    <label for="crossTime">Intraday ET bar-end</label><input type="time" id="crossTime" value="16:00" step="60" />
+    <label for="crossFeed">Historical feed</label><select id="crossFeed"><option value="sip">SIP</option><option value="iex">IEX</option></select>
+    <label for="crossOffset">ET offset</label><select id="crossOffset"><option value="-04:00">EDT (UTC−4)</option><option value="-05:00">EST (UTC−5)</option></select>
+    <button id="crossRun" type="button" class="primary">Analyze history</button>
+  </div>
+  <div class="crossLayout" style="margin-top:18px">
+    <section class="crossPanel"><h3>Aligned cross-asset comparison</h3><div class="sub" id="crossMeta">No forecast or trade recommendation.</div><div id="crossRows" class="marketRows crossRows" role="status">Open Cross-Market to run an as-of comparison.</div></section>
+    <section class="crossPanel"><div class="group" style="justify-content:space-between;margin-bottom:9px"><h3>TradingView watchlists</h3><button id="watchRefresh" type="button">Refresh snapshots</button></div>
+      <div class="crossFilters" style="margin-bottom:10px"><label for="watchGroup">Screenshot group</label><select id="watchGroup"><option value="all">All visible symbols</option><option value="stocks">Stocks</option><option value="sectors">Sectors</option><option value="energy_stocks">Energy Stocks</option><option value="misc">Misc</option><option value="macro">Macro</option></select></div>
+      <div class="sub" id="watchStatus">Live polling disabled unless explicitly enabled on server startup.</div><div id="watchRows" class="marketRows crossRows" role="status">Loading watchlists…</div>
+      <p class="sub">The screenshot symbols are retained exactly. Alpaca IEX stocks/ETFs and eligible crypto can be polled when enabled; indices, futures, CFDs, macro series and retired symbols require separate verified adapters.</p>
+    </section>
+  </div>
+</div>
+</section>
+<div class="foot">RESEARCH ONLY • v0.8.0 UI serves locally at 127.0.0.1, with no CDN or order integration. Live read-only data is opt-in and connects to Alpaca only when explicitly enabled. Supplied historical CSVs may use back-adjusted prices; displayed levels are not real-time and do not establish profitability. Daily bars do not contain executable intraday options fills. Executed-trade volume profiles appear only when explicitly supplied trade prints exist; they are not Level II depth, live liquidity, or executable options quotes. The v0.1/v0.2 research tests and offline replay files remain available separately.</div>
 </main>
 <script>
 'use strict';
@@ -777,9 +815,9 @@ function hover(ev){if(!app.chartBox)return;const cvs=$('chart'),r=cvs.getBoundin
 // v0.6 workspaces share a single backend but never mix historical and live data.
 let workspace='replay',livePolling=null,liveTicket=0,researchTicket=0;
 function setWorkspace(mode){
- if(!['live','replay','research'].includes(mode))return;
+ if(!['live','replay','research','cross'].includes(mode))return;
  workspace=mode;stop();cancelFrameWork();cancelProfileWork();if(livePolling!==null){clearInterval(livePolling);livePolling=null;}
- for(const [key,id] of [['live','liveWorkspace'],['replay','replayWorkspace'],['research','researchWorkspace']]){
+ for(const [key,id] of [['live','liveWorkspace'],['replay','replayWorkspace'],['research','researchWorkspace'],['cross','crossWorkspace']]){
    $(id).hidden=mode!==key;
    $('tab'+key[0].toUpperCase()+key.slice(1)).classList.toggle('active',mode===key);
    $('tab'+key[0].toUpperCase()+key.slice(1)).setAttribute('aria-pressed',String(mode===key));
@@ -787,6 +825,10 @@ function setWorkspace(mode){
  if(mode==='live'){
    $('modeBadge').textContent='LIVE MONITOR · OBSERVATION ONLY';
    showLive();livePolling=setInterval(()=>{if(workspace==='live')showLive();},4000);
+ }else if(mode==='cross'){
+   $('modeBadge').textContent='CROSS-MARKET · RESEARCH ONLY';
+   if(app.dates.length && !$('crossDate').dataset.edited)$('crossDate').value=app.dates[app.idx-1]||app.dates[app.idx]||'2026-09-30';
+   showCross();showWatchlist();livePolling=setInterval(()=>{if(workspace==='cross')showWatchlist();},15000);
  }else if(mode==='research'){
    $('modeBadge').textContent=app.info?.data?.some(d=>d.is_synthetic_demo)?'SYNTHETIC REGIME DEMO':'HISTORICAL REGIME RESEARCH';
    if(!$('researchDate').value&&app.dates.length)$('researchDate').value=app.dates[app.idx];
@@ -890,6 +932,57 @@ async function showStudy(){
  }catch(e){if(ticket===studyTicket){showEmpty($('studyTable'),'Study unavailable: '+e.message);$('studyMeta').textContent='Study request failed; see API status.';}}
  finally{if(ticket===studyTicket)button.disabled=false;}
 }
+
+// v0.8 point-in-time cross-asset API; never reuse live observations for research.
+let crossTicket=0,watchTicket=0,watchCatalog=null,watchSnapshot=null;
+async function showCross(){
+ const ticket=++crossTicket;
+ const date=$('crossDate').value;const isMinute=$('crossFrame').value==='1m';
+ if(!date){showEmpty($('crossRows'),'Select a historical research date');return;}
+ const asof=isMinute?date+'T'+$('crossTime').value+':00'+$('crossOffset').value:date;
+ $('crossMeta').textContent='Loading strictly completed '+(isMinute?'SIP/IEX minute':'daily')+' observations…';
+ try{
+  const query=new URLSearchParams({asof,target:$('crossTarget').value,timeframe:$('crossFrame').value,feed:$('crossFeed').value,symbols:'SPY,QQQ,NVDA,SMH,XLK,IWM',window:'20'});
+  const result=await api('/api/cross-asset?'+query);if(ticket!==crossTicket||workspace!=='cross')return;
+  $('crossMeta').textContent=`${result.timeframe} · ${result.feed} · target last bar ${result.target_last_completed_at||'not available'} · no future data`;
+  const container=$('crossRows');container.replaceChildren();
+  for(const row of result.rows){
+   const corr=row.correlation===null?'corr —':'corr '+row.correlation.toFixed(3);
+   const value=row.relative_to_target_pp===null?'—':(row.relative_to_target_pp>=0?'+':'')+row.relative_to_target_pp.toFixed(2)+' pp';
+   const item=kv(row.symbol,value,(row.missing_or_stale?'MISSING/STALE · ':'')+corr+' · '+(row.last_completed_at||'no local history'));
+   const elem=item.querySelector('.value');if(row.relative_to_target_pp!==null)elem.classList.add(row.relative_to_target_pp>=0?'is-positive':'is-negative');container.append(item);
+  }
+ }catch(e){if(ticket===crossTicket){$('crossMeta').textContent='Historical comparison unavailable';showEmpty($('crossRows'),e.message);}}
+}
+async function showWatchlist(){
+ const ticket=++watchTicket;
+ try{
+  const [catalog,snapshot]=await Promise.all([watchCatalog?Promise.resolve(watchCatalog):api('/api/watchlist'),api('/api/live/watchlist')]);
+  if(ticket!==watchTicket||workspace!=='cross')return;
+  watchCatalog=catalog;watchSnapshot=snapshot;renderWatchlist();
+ }catch(e){if(ticket===watchTicket){$('watchStatus').textContent='Watchlist API unavailable: '+e.message;}}
+}
+function renderWatchlist(){
+ if(!watchCatalog||!watchSnapshot)return;
+ const group=$('watchGroup').value;
+ const ids=group==='all'?watchCatalog.symbols.map(s=>s.symbol):watchCatalog.groups[group]||[];
+ const container=$('watchRows');container.replaceChildren();
+ $('watchStatus').textContent=`${ids.length} screenshot symbols · ${watchSnapshot.state.toUpperCase()} · US stocks ${watchSnapshot.stock_feed} · ${watchSnapshot.last_poll_utc||'no provider request yet'}`+(watchSnapshot.error?' · '+watchSnapshot.error:'');
+ for(const symbol of ids){const item=watchSnapshot.instruments[symbol];if(!item)continue;
+  const obs=item.observation;
+  const price=obs?.price!==undefined?money(obs.price):obs?.bid!==undefined?(money(obs.bid)+' / '+money(obs.ask)):'—';
+  const meta=item.provider+' · '+item.status+(obs?' · '+Math.round(obs.event_age_seconds)+'s event age':'');
+  const row=kv(symbol,price,meta);if(item.status==='stale')row.querySelector('.value').classList.add('is-negative');container.append(row);
+ }
+}
+$('tabCross').onclick=()=>setWorkspace('cross');
+$('crossRun').onclick=showCross;
+$('watchRefresh').onclick=showWatchlist;
+$('watchGroup').onchange=renderWatchlist;
+$('crossFrame').onchange=()=>{$('crossTime').disabled=$('crossFrame').value!=='1m';};
+$('crossTime').disabled=true;
+$('crossDate').onchange=()=>{$('crossDate').dataset.edited='1';};
+
 $('studyRun').onclick=showStudy;
 $('tabLive').onclick=()=>setWorkspace('live');
 $('tabReplay').onclick=()=>setWorkspace('replay');
